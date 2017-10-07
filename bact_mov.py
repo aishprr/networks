@@ -48,14 +48,19 @@ class BactType:
 def main():
   bact_colors = ['blue', 'green']
   ai_colors = ['red', 'orange', 'yellow']
+  bact_speed = [0.1, 0.05]
+  bact_map = {BactType.BACT_1: AIType.BACT_1, 
+              BactType.BACT_2: AIType.BACT_2}
 
   # initial data structures
   bactGraphs = []
   aiGraphs = []
+  bactPosInfoOrig = []
   bactPosInfo = []
   for i in xrange(BACT_TYPE_COUNT):
     b = [[dict() for i in range(AIC_WCOUNT)] for j in range(AIC_HCOUNT)]
-    bactPosInfo += [b]
+    bactPosInfoOrig += [b]
+  bactPosInfo = bactPosInfoOrig
   
   aiPosInfo = []
   for i in xrange(AI_TYPE_COUNT):
@@ -106,14 +111,14 @@ def main():
               "will be slow.")
         layout = nx.spring_layout
 
-
+  first = True
   while(1):
-    time.sleep(0.1)
-    
+    time.sleep(1)
+    plt.cla()
+
     region = 110  # for pylab 2x2 subplot layout
     plt.subplots_adjust(left=0, right=1, bottom=0, top=0.95, wspace=0.01, hspace=0.01)
         
-    print "*********************"
     region += 1
     plt.subplot(region)
     plt.title("p = %6.3f" % (23))
@@ -127,8 +132,6 @@ def main():
         for c in xrange(AIC_WCOUNT):
           all_coords.update(posDicts[r][c])
       
-      #print(all_coords)
-
       nx.draw(bactGraphs[i], all_coords, 
         node_color=color_map, with_labels=False, node_size=25)
 
@@ -146,31 +149,56 @@ def main():
       nx.draw(aiGraphs[i], all_coords, 
         node_color=color_map, with_labels=False, node_size=10)
 
-    
-    # identify largest connected component
-    # Gcc = sorted(nx.connected_component_subgraphs(G), key=len, reverse=True)
-    # G0 = Gcc[0]
-    # nx.draw_networkx_edges(G0, pos,
-    #                        with_labels=False,
-    #                        edge_color='r',
-    #                        width=6.0
-    #                       )
-    # # show other connected components
-    # for Gi in Gcc[1:]:
-    #     if len(Gi) > 1:
-    #         nx.draw_networkx_edges(Gi, pos,
-    #                                with_labels=False,
-    #                                edge_color='r',
-    #                                alpha=0.3,
-    #                                width=5.0
-    #                                 )
+
+    # we have information about the previous positions.
+    # so, now go through each and find the quadrant with max number
+    # of ais of each type
+    maxAIQuadrants = []
+    for a in xrange(AI_TYPE_COUNT):
+      posDicts = aiPosInfo[i]
+      maxLen = 0
+      (maxR, maxC) = (-1, -1)
+      for r in xrange(AIC_HCOUNT):
+        for c in xrange(AIC_WCOUNT):
+          if (len(posDicts[r][c]) > maxLen):
+            maxLen = len(posDicts[r][c])
+            maxR = r
+            maxC = c
+      maxAIQuadrants += [(r,c)]
+
+    for b in xrange(BACT_TYPE_COUNT):
+      ai = bact_map[b]
+      (maxr, maxc) = maxAIQuadrants[ai]
+      # find the mid point of this quadrant
+      (x, y) = ((maxc + 0.5) * AIC_CFRAC,
+                (maxr + 0.5) * AIC_RFRAC)
+      posDicts = bactPosInfo[b]
+      #print(posDicts)
+      all_coords = dict();
+      for r in xrange(AIC_HCOUNT):
+        for c in xrange(AIC_WCOUNT):
+          all_coords.update(posDicts[r][c])
+
+      bactPosInfo = bactPosInfoOrig
+      for node in all_coords.keys():
+        coords = all_coords[node]
+        (dx, dy) = (x - coords[0], y - coords[1])
+        (newx, newy) = (coords[0] + dx*bact_speed[b], 
+                        coords[1] + dy*bact_speed[b])
+        all_coords[node][0] = newx;
+        all_coords[node][1] = newy;
+
+        posArray = all_coords[node]
+        x = posArray[0]
+        y = posArray[1]
+        c = int(x / AIC_CFRAC)
+        r = int(y / AIC_RFRAC)
+        bactPosInfo[b][r][c][node] = posArray
+
     plt.draw()
+
     plt.pause(1e-17)
-    #while(True):
-    #  pass
-
-    #break
-
+    
   #global plot
   #plt.plot.show()
 
