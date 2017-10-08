@@ -27,7 +27,7 @@ def merge(*dicts):
     return 
     { k: reduce(lambda d, x: x.get(k, d), dicts, None) for k in reduce(or_, map(lambda x: x.keys(), dicts), set()) }
 
-BACT_COUNT = 8
+BACT_COUNT = 2
 AI_COUNT = 10
 AIC_HCOUNT = 4
 AIC_WCOUNT = 4
@@ -47,10 +47,12 @@ class BactType:
 
 def main():
   bact_colors = ['blue', 'green']
+  bact_dis_thresh = [0.1, 0.05]
   ai_colors = ['red', 'orange', 'yellow']
   bact_speed = [0.1, 0.05]
   bact_map = {BactType.BACT_1: AIType.BACT_1, 
               BactType.BACT_2: AIType.BACT_2}
+
 
   # initial data structures
   bactGraphs = []
@@ -112,6 +114,7 @@ def main():
         layout = nx.spring_layout
 
   first = True
+  bact_all_coords_map = dict();
   while(1):
     time.sleep(1)
     plt.cla()
@@ -178,13 +181,27 @@ def main():
       for r in xrange(AIC_HCOUNT):
         for c in xrange(AIC_WCOUNT):
           all_coords.update(posDicts[r][c])
+      
+      bact_all_coords_map[b] = all_coords
 
       bactPosInfo = bactPosInfoOrig
       for node in all_coords.keys():
         coords = all_coords[node]
         (dx, dy) = (x - coords[0], y - coords[1])
-        (newx, newy) = (coords[0] + dx*bact_speed[b], 
-                        coords[1] + dy*bact_speed[b])
+        # only change if x & y are not already in the same
+        # otherwise move them in a random direction
+        orig_r = coords[1] / AIC_RFRAC
+        orig_c = coords[0] / AIC_CFRAC
+        if (orig_r == maxr and orig_c == maxc):
+          xrandstart = maxc * AIC_CFRAC * 10000
+          xrandend = (maxc + 1) * AIC_CFRAC * 10000
+          yrandstart = maxr * AIC_RFRAC * 10000
+          yrandend = (maxr + 1) * AIC_RFRAC * 10000
+          newx = random.randint(xrandstart, xrandend) / 10000.0
+          newy = random.randint(yrandstart, yrandend) / 10000.0
+        else:
+          (newx, newy) = (coords[0] + dx*bact_speed[b], 
+                          coords[1] + dy*bact_speed[b])
         all_coords[node][0] = newx;
         all_coords[node][1] = newy;
 
@@ -194,6 +211,25 @@ def main():
         c = int(x / AIC_CFRAC)
         r = int(y / AIC_RFRAC)
         bactPosInfo[b][r][c][node] = posArray
+
+    for b in xrange(BACT_TYPE_COUNT):
+      # we need to connect the bacteria which are kind of close enough
+      all_coords = bact_all_coords_map[b]
+      for node1 in all_coords.keys():
+        posArray1 = all_coords[node1]
+        x1 = posArray1[0]
+        y1 = posArray1[1]
+        for node2 in all_coords.keys():
+          if (node1 != node2):
+            posArray2 = all_coords[node2]
+            x2 = posArray2[0]
+            y2 = posArray2[1]
+            dis = (abs(x1 - x2)**2 + abs(y1 - y2)**2)**(0.5)
+            
+            if (dis < bact_dis_thresh[b]):
+              if (not bactGraphs[b].has_edge(node1, node2)):
+                bactGraphs[b].add_edge(node1, node2)
+
 
     plt.draw()
 
