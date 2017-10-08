@@ -30,8 +30,8 @@ def merge(*dicts):
     return 
     { k: reduce(lambda d, x: x.get(k, d), dicts, None) for k in reduce(or_, map(lambda x: x.keys(), dicts), set()) }
 
-BACT_COUNT = 3
-AI_COUNT = 30
+BACT_COUNT = 10
+AI_COUNT = 10
 AIC_HCOUNT = 4
 AIC_WCOUNT = 4
 
@@ -49,7 +49,7 @@ class AIType:
 class BactType:
   BACT_1 = 0#, BACT_2 = range(BACT_TYPE_COUNT)
 
-AI_PER_BAC = 2
+AI_PER_BAC = 1
 
 
 def main():
@@ -286,23 +286,23 @@ def main():
         # we want to double this number
         for i in xrange(bgn):
           bactGraphs[b].add_node(i + bgn)
-        print "orignumber %d, added number ", bgn, bactGraphs[b].number_of_nodes()
+        #print "orignumber %d, added number ", bgn, bactGraphs[b].number_of_nodes()
         # this is a dictionary
         add_all_coords = bact_all_coords_map[b]
         this_bact_all_coords = dict()
         for node in add_all_coords.keys():
           value1 = add_all_coords[node]
           value2 = np.empty_like(value1)
-          print (node, value1)
-          print (node, np.add(value1[0],-BACT_CHILD_DIS), 
-            np.add(value1[0], BACT_CHILD_DIS))
-          print (node, np.add(value1[1],-BACT_CHILD_DIS), 
-            np.add(value1[1], BACT_CHILD_DIS))
+          #print (node, value1)
+          #print (node, np.add(value1[0],-BACT_CHILD_DIS), 
+          #  np.add(value1[0], BACT_CHILD_DIS))
+          #print (node, np.add(value1[1],-BACT_CHILD_DIS), 
+          #  np.add(value1[1], BACT_CHILD_DIS))
           value2[:] = value1
           value2[0] = np.clip(np.random.uniform(np.add(value1[0],-0.05), 
-            np.add(value1[0], 0.05)), 0, 1)
+            np.add(value1[0], 0.05)), 0, 0.999999)
           value2[1] = np.clip(np.random.uniform(np.add(value1[1],-0.05), 
-            np.add(value1[1],0.05)), 0, 1)
+            np.add(value1[1],0.05)), 0, 0.999999)
           new_node = node + bgn
           this_bact_all_coords[new_node] = value2
           this_bact_all_coords[node] = value1
@@ -316,7 +316,7 @@ def main():
         # they start off at original color
         
         bact_all_colors_map[b] = bact_all_colors_map[b] + [bact_colors[b]] * bgn
-        print bact_all_colors_map[b]
+        #print bact_all_colors_map[b]
 
         bactPosInfo = bactPosInfoOrig
         for node in bact_all_coords_map[b].keys():
