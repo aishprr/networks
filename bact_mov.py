@@ -35,6 +35,8 @@ AI_COUNT = 30
 AIC_HCOUNT = 4
 AIC_WCOUNT = 4
 
+BACT_DEG_THRESH = 3
+
 AIC_RFRAC = 1.0 / AIC_HCOUNT
 AIC_CFRAC = 1.0 / AIC_WCOUNT
 
@@ -169,7 +171,7 @@ def main():
         node_color=color_map, with_labels=False, node_size=10)
 
     # START OF STEP COUNT % 2 == 0
-    if (step_count % 5 != 0):
+    if (step_count % 10 != 0):
     #if (True):
       # we have information about the previous positions.
       # so, now go through each and find the quadrant with max number
@@ -248,7 +250,9 @@ def main():
               y2 = posArray2[1]
               dis = (abs(x1 - x2)**2 + abs(y1 - y2)**2)**(0.5)
               
-              if (dis < bact_dis_thresh[b]):
+              if (dis < bact_dis_thresh[b] 
+                and bactGraphs[b].degree(node1) < BACT_DEG_THRESH
+                and bactGraphs[b].degree(node2) < BACT_DEG_THRESH):
                 if (not bactGraphs[b].has_edge(node1, node2)):
                   bactGraphs[b].add_edge(node1, node2)
         ai = bact_ai_map[b]
@@ -291,11 +295,10 @@ def main():
         this_bact_all_coords = dict()
         for node in add_all_coords.keys():
           value1 = add_all_coords[node]
-          print (node, value1)
           value2 = numpy.empty_like(value1)
           value2[:] = value1
-          value2[0] = random.uniform(value2[0]-0.2, value2[0]+0.2)
-          value2[1] = random.uniform(value2[1]-0.2, value2[1]+0.2)
+          value2[0] = random.uniform(value1[0]-0.05, value1[0]+0.05)
+          value2[1] = random.uniform(value1[1]-0.05, value1[1]+0.05)
           value2[0] = min(value2[0], 0.9999999)
           value2[0] = max(0, value2[0])
           value2[1] = min(value2[1], 0.9999999)
@@ -304,9 +307,11 @@ def main():
           this_bact_all_coords[new_node] = value2
           this_bact_all_coords[node] = value1
           print "node = %d new node = %d", node, new_node
-
-        print bact_all_coords_map[b]
-        print this_bact_all_coords
+          print (node, value1)
+          print (new_node, value2)
+          
+        #print bact_all_coords_map[b]
+        #print this_bact_all_coords
         bact_all_coords_map[b] = this_bact_all_coords
         # they start off at original color
         
