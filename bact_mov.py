@@ -15,6 +15,7 @@ Bacteria movement
 import math
 import time
 from enum import Enum
+import random
 
 import matplotlib.pyplot as plt
 
@@ -27,7 +28,7 @@ def merge(*dicts):
     return 
     { k: reduce(lambda d, x: x.get(k, d), dicts, None) for k in reduce(or_, map(lambda x: x.keys(), dicts), set()) }
 
-BACT_COUNT = 2
+BACT_COUNT = 10
 AI_COUNT = 10
 AIC_HCOUNT = 4
 AIC_WCOUNT = 4
@@ -35,23 +36,24 @@ AIC_WCOUNT = 4
 AIC_RFRAC = 1.0 / AIC_HCOUNT
 AIC_CFRAC = 1.0 / AIC_WCOUNT
 
-AI_TYPE_COUNT = 3
-BACT_TYPE_COUNT = 2
+AI_TYPE_COUNT = 1
+BACT_TYPE_COUNT = 1
 class AIType:
-  BACT_1, BACT_2, TCELL = range(AI_TYPE_COUNT)
+  BACT_1 = 0#, BACT_2, TCELL = range(AI_TYPE_COUNT)
 
 class BactType:
-  BACT_1, BACT_2 = range(BACT_TYPE_COUNT)
+  BACT_1 = 0#, BACT_2 = range(BACT_TYPE_COUNT)
 
 
 
 def main():
   bact_colors = ['blue', 'green']
   bact_dis_thresh = [0.1, 0.05]
+  ai_conv_dis_thresh = [0.05, 0.05]
   ai_colors = ['red', 'orange', 'yellow']
-  bact_speed = [0.1, 0.05]
-  bact_map = {BactType.BACT_1: AIType.BACT_1, 
-              BactType.BACT_2: AIType.BACT_2}
+  bact_speed = [0.05, 0.15]
+  bact_ai_map = {BactType.BACT_1: AIType.BACT_1}#, 
+              #BactType.BACT_2: AIType.BACT_2}
 
 
   # initial data structures
@@ -93,8 +95,11 @@ def main():
       y = posArray[1]
       c = int(x / AIC_CFRAC)
       r = int(y / AIC_RFRAC)
-      aiPosInfo[a][r][c][node] = posArray
 
+      aiPosInfo[a][r][c][node] = posArray
+      
+
+  #return
   # originally we want random distribution of AI & Bacteria
 
 
@@ -114,7 +119,13 @@ def main():
         layout = nx.spring_layout
 
   first = True
-  bact_all_coords_map = dict();
+  bact_all_coords_map = dict()
+  bact_all_colors_map = dict()
+  ai_all_coords_map = dict()
+  for i in xrange(BACT_TYPE_COUNT):
+    color_map = [bact_colors[i]] * BACT_COUNT
+    bact_all_colors_map[i] = color_map
+
   while(1):
     time.sleep(1)
     plt.cla()
@@ -127,28 +138,23 @@ def main():
     plt.title("p = %6.3f" % (23))
 
     for i in xrange(BACT_TYPE_COUNT):
-      color_map = [bact_colors[i]] * BACT_COUNT
       posDicts = bactPosInfo[i]
-      #print(posDicts)
       all_coords = dict();
       for r in xrange(AIC_HCOUNT):
         for c in xrange(AIC_WCOUNT):
           all_coords.update(posDicts[r][c])
-      
       nx.draw(bactGraphs[i], all_coords, 
-        node_color=color_map, with_labels=False, node_size=25)
+        node_color=bact_all_colors_map[i], with_labels=False, node_size=40)
 
     for i in xrange(AI_TYPE_COUNT):
       color_map = [ai_colors[i]] * AI_COUNT
       posDicts = aiPosInfo[i]
-      #print(posDicts)
       all_coords = dict();
       for r in xrange(AIC_HCOUNT):
         for c in xrange(AIC_WCOUNT):
           all_coords.update(posDicts[r][c])
+      ai_all_coords_map[i] = all_coords
       
-      #print(all_coords)
-
       nx.draw(aiGraphs[i], all_coords, 
         node_color=color_map, with_labels=False, node_size=10)
 
@@ -163,20 +169,23 @@ def main():
       (maxR, maxC) = (-1, -1)
       for r in xrange(AIC_HCOUNT):
         for c in xrange(AIC_WCOUNT):
+          print (len(posDicts[r][c]), maxLen)
           if (len(posDicts[r][c]) > maxLen):
             maxLen = len(posDicts[r][c])
             maxR = r
             maxC = c
-      maxAIQuadrants += [(r,c)]
+      maxAIQuadrants += [(maxR,maxC)]
+
+    print maxAIQuadrants
 
     for b in xrange(BACT_TYPE_COUNT):
-      ai = bact_map[b]
+      ai = bact_ai_map[b]
       (maxr, maxc) = maxAIQuadrants[ai]
       # find the mid point of this quadrant
       (x, y) = ((maxc + 0.5) * AIC_CFRAC,
                 (maxr + 0.5) * AIC_RFRAC)
+
       posDicts = bactPosInfo[b]
-      #print(posDicts)
       all_coords = dict();
       for r in xrange(AIC_HCOUNT):
         for c in xrange(AIC_WCOUNT):
@@ -190,16 +199,24 @@ def main():
         (dx, dy) = (x - coords[0], y - coords[1])
         # only change if x & y are not already in the same
         # otherwise move them in a random direction
-        orig_r = coords[1] / AIC_RFRAC
-        orig_c = coords[0] / AIC_CFRAC
+        orig_r = int(coords[1] / AIC_RFRAC)
+        orig_c = int(coords[0] / AIC_CFRAC)
         if (orig_r == maxr and orig_c == maxc):
-          xrandstart = maxc * AIC_CFRAC * 10000
-          xrandend = (maxc + 1) * AIC_CFRAC * 10000
-          yrandstart = maxr * AIC_RFRAC * 10000
-          yrandend = (maxr + 1) * AIC_RFRAC * 10000
+          print "already there!!!"
+
+          xrandstart = int(maxc * AIC_CFRAC * 10000)
+          xrandend = int((maxc + 1) * AIC_CFRAC * 10000)
+          yrandstart = int((maxr * AIC_RFRAC * 10000))
+          yrandend = int((maxr + 1) * AIC_RFRAC * 10000)
           newx = random.randint(xrandstart, xrandend) / 10000.0
           newy = random.randint(yrandstart, yrandend) / 10000.0
+          print(xrandstart, xrandend, yrandstart, yrandend, newx, newy)
+          #(newx, newy) = (coords[0] + dx*bact_speed[b], 
+          #                coords[1] + dy*bact_speed[b])
+
         else:
+          print "not already there!!!"
+          print orig_r, orig_c , maxr, maxc
           (newx, newy) = (coords[0] + dx*bact_speed[b], 
                           coords[1] + dy*bact_speed[b])
         all_coords[node][0] = newx;
@@ -229,6 +246,27 @@ def main():
             if (dis < bact_dis_thresh[b]):
               if (not bactGraphs[b].has_edge(node1, node2)):
                 bactGraphs[b].add_edge(node1, node2)
+      ai = bact_ai_map[b]
+      aicoords = ai_all_coords_map[ai]
+      
+
+      for nodeai in aicoords.keys():
+        ai_pos = aicoords[nodeai]
+        aix = ai_pos[0]
+        aiy = ai_pos[1]
+        for nodeb in all_coords.keys():
+          bpos = all_coords[nodeb]
+          bx = bpos[0]
+          by = bpos[1]
+          dis = (abs(bx - aix)**2 + abs(by - aiy)**2)**(0.5)
+
+          if (dis < ai_conv_dis_thresh[ai]):
+            aiGraphs[ai].remove_node(nodeai)
+            for r in xrange(AIC_HCOUNT):
+              for c in xrange(AIC_WCOUNT):
+                aiPosInfo[ai][r][c].pop(nodeai, None)
+            bact_all_colors_map[b][nodeb] = 'red'
+
 
 
     plt.draw()
