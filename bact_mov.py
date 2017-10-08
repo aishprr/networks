@@ -17,7 +17,7 @@ import time
 from enum import Enum
 import random
 
-import numpy
+import numpy as np
 
 import matplotlib.pyplot as plt
 
@@ -154,7 +154,7 @@ def main():
           all_coords.update(posDicts[r][c])
       num = bactGraphs[i].number_of_nodes()
       num2 = len(all_coords)
-      print ("NODE COUNT %d coordCOUNT %d", num, num2)
+      #print ("NODE COUNT %d coordCOUNT %d", num, num2)
       nx.draw(bactGraphs[i], all_coords, 
         node_color=bact_all_colors_map[i], with_labels=False, node_size=40)
 
@@ -295,14 +295,15 @@ def main():
         this_bact_all_coords = dict()
         for node in add_all_coords.keys():
           value1 = add_all_coords[node]
-          value2 = numpy.empty_like(value1)
+          value2 = np.empty_like(value1)
+          print (node, value1)
+          print (node, np.add(value1[0],-0.05), np.add(value1[0], 0.05))
+          print (node, np.add(value1[1],-0.05), np.add(value1[1], 0.05))
           value2[:] = value1
-          value2[0] = random.uniform(value1[0]-0.05, value1[0]+0.05)
-          value2[1] = random.uniform(value1[1]-0.05, value1[1]+0.05)
-          value2[0] = min(value2[0], 0.9999999)
-          value2[0] = max(0, value2[0])
-          value2[1] = min(value2[1], 0.9999999)
-          value2[1] = max(0, value2[0])
+          value2[0] = np.clip(np.random.uniform(np.add(value1[0],-0.05), 
+            np.add(value1[0], 0.05)), 0, 1)
+          value2[1] = np.clip(np.random.uniform(np.add(value1[1],-0.05), 
+            np.add(value1[1],0.05)), 0, 1)
           new_node = node + bgn
           this_bact_all_coords[new_node] = value2
           this_bact_all_coords[node] = value1
@@ -325,7 +326,6 @@ def main():
           y = posArray[1]
           c = int(x / AIC_CFRAC)
           r = int(y / AIC_RFRAC)
-          print b, r, c, node
           bactPosInfo[b][r][c][node] = posArray
 
     plt.draw()
