@@ -49,6 +49,7 @@ class AIType:
 class BactType:
   BACT_1 = 0#, BACT_2 = range(BACT_TYPE_COUNT)
 
+AI_PER_BAC = 2
 
 
 def main():
@@ -102,7 +103,6 @@ def main():
       r = int(y / AIC_RFRAC)
 
       aiPosInfo[a][r][c][node] = posArray
-      
 
   try:
     import pygraphviz
@@ -156,7 +156,7 @@ def main():
         node_color=bact_all_colors_map[i], with_labels=False, node_size=40)
 
     for i in xrange(AI_TYPE_COUNT):
-      color_map = [ai_colors[i]] * AI_COUNT
+      color_map = [ai_colors[i]] * aiGraphs[i].number_of_nodes()
       posDicts = aiPosInfo[i]
       all_coords = dict();
       for r in xrange(AIC_HCOUNT):
@@ -306,9 +306,9 @@ def main():
           new_node = node + bgn
           this_bact_all_coords[new_node] = value2
           this_bact_all_coords[node] = value1
-          print "node = %d new node = %d", node, new_node
-          print (node, value1)
-          print (new_node, value2)
+          #print "node = %d new node = %d", node, new_node
+          #print (node, value1)
+          #print (new_node, value2)
           
         #print bact_all_coords_map[b]
         #print this_bact_all_coords
@@ -326,6 +326,34 @@ def main():
           c = int(x / AIC_CFRAC)
           r = int(y / AIC_RFRAC)
           bactPosInfo[b][r][c][node] = posArray
+
+      # change the AI number, add more of them
+      for b in xrange(BACT_TYPE_COUNT):
+        total_b = bactGraphs[b].number_of_nodes()
+        ai = bact_ai_map[b]
+        for r in xrange(AIC_HCOUNT):
+          for c in xrange(AIC_WCOUNT):
+            bCount = len(bactPosInfo[b][r][c].keys())
+            # we want to add so many in this quadrant
+            newAiCount = int(bCount * AI_PER_BAC)
+            xrandstart = int(c * AIC_CFRAC * 10000)
+            xrandend = int((c + 1) * AIC_CFRAC * 10000)
+            yrandstart = int((r * AIC_RFRAC * 10000))
+            yrandend = int((r + 1) * AIC_RFRAC * 10000)
+            for i in xrange(newAiCount):
+              newNode = i + newAiCount
+              aiGraphs[ai].add_node(newNode)
+              newx = random.randint(xrandstart, xrandend) / 10000.0
+              newy = random.randint(yrandstart, yrandend) / 10000.0
+              newCoord = np.array([newx, newy])
+              aiPosInfo[ai][r][c][newNode] = newCoord
+        posDicts = aiPosInfo[ai]
+        all_coords = dict();
+        for r in xrange(AIC_HCOUNT):
+          for c in xrange(AIC_WCOUNT):
+            all_coords.update(posDicts[r][c])
+        ai_all_coords_map[ai] = posDicts
+
 
     plt.draw()
     plt.pause(1e-17)
