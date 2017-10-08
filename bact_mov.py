@@ -36,6 +36,7 @@ AIC_HCOUNT = 4
 AIC_WCOUNT = 4
 
 BACT_DEG_THRESH = 3
+BACT_CHILD_DIS = 0.1
 
 AIC_RFRAC = 1.0 / AIC_HCOUNT
 AIC_CFRAC = 1.0 / AIC_WCOUNT
@@ -102,10 +103,6 @@ def main():
 
       aiPosInfo[a][r][c][node] = posArray
       
-
-  #return
-  # originally we want random distribution of AI & Bacteria
-
 
   try:
     import pygraphviz
@@ -297,8 +294,10 @@ def main():
           value1 = add_all_coords[node]
           value2 = np.empty_like(value1)
           print (node, value1)
-          print (node, np.add(value1[0],-0.05), np.add(value1[0], 0.05))
-          print (node, np.add(value1[1],-0.05), np.add(value1[1], 0.05))
+          print (node, np.add(value1[0],-BACT_CHILD_DIS), 
+            np.add(value1[0], BACT_CHILD_DIS))
+          print (node, np.add(value1[1],-BACT_CHILD_DIS), 
+            np.add(value1[1], BACT_CHILD_DIS))
           value2[:] = value1
           value2[0] = np.clip(np.random.uniform(np.add(value1[0],-0.05), 
             np.add(value1[0], 0.05)), 0, 1)
