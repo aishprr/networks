@@ -150,7 +150,7 @@ def main():
       num = bactGraphs[i].number_of_nodes()
       num2 = len(all_coords)
       #print ("NODE COUNT %d coordCOUNT %d", num, num2)
-      nx.draw(bactGraphs[i], all_coords, 
+      nx.draw(bactGraphs[i], all_coords, edge_color=bact_colors[i],
         node_color=bact_all_colors_map[i], with_labels=False, node_size=50)
 
     for i in xrange(AI_TYPE_COUNT):
