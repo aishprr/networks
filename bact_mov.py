@@ -25,6 +25,7 @@ def merge(*dicts):
     { k: reduce(lambda d, x: x.get(k, d), dicts, None) for k in reduce(or_, map(lambda x: x.keys(), dicts), set()) }
 
 BACT_INIT_COUNT = [10, 10]
+BACT_COUNT_LIMIT = [500, 500]
 AI_INIT_COUNT = [5, 5]
 AIC_HCOUNT = 4
 AIC_WCOUNT = 4
@@ -53,6 +54,7 @@ AI_PER_BAC = 1
 MACRO_COLOR = 'pink'
 
 def main():
+  bact_count = BACT_INIT_COUNT
   bact_colors = ['blue', 'green']
   bact_dis_thresh = [0.1, 0.05]
   ai_conv_dis_thresh = [0.05, 0.05]
@@ -153,7 +155,8 @@ def main():
         for c in xrange(AIC_WCOUNT):
           all_coords.update(posDicts[r][c])
       num = bactGraphs[i].number_of_nodes()
-      num2 = len(all_coords)
+      bact_counts[i] = num
+      #num2 = len(all_coords)
       #print ("NODE COUNT %d coordCOUNT %d", num, num2)
       nx.draw(bactGraphs[i], all_coords, edge_color=bact_colors[i], alpha=1,
         node_color=bact_all_colors_map[i], with_labels=False, node_size=50)
@@ -287,6 +290,8 @@ def main():
     
     else:
       for b in xrange(BACT_TYPE_COUNT):
+        if (bact_count[b] >= BACT_COUNT_LIMIT[b]):
+          continue
         bg = bactGraphs[b]
         bgn = bg.number_of_nodes();
         # we want to double this number
@@ -335,6 +340,8 @@ def main():
 
       # change the AI number, add more of them
       for b in xrange(BACT_TYPE_COUNT):
+        if (bact_count[b] >= BACT_COUNT_LIMIT[b]):
+          continue
         total_b = bactGraphs[b].number_of_nodes()
         ai = bact_ai_map[b]
         for r in xrange(AIC_HCOUNT):
