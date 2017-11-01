@@ -28,10 +28,11 @@ BACT_INIT_COUNT = [10, 10]
 AI_INIT_COUNT = [5, 5]
 AIC_HCOUNT = 4
 AIC_WCOUNT = 4
-
+MACRO_INIT_COUNT = 10
 
 BACT_DEG_THRESH = 3
 BACT_CHILD_DIS = 0.1
+BACT_STRENGTH = [0.5, 1]
 
 AIC_RFRAC = 1.0 / AIC_HCOUNT
 AIC_CFRAC = 1.0 / AIC_WCOUNT
@@ -49,6 +50,7 @@ class BactType:
 
 AI_PER_BAC = 1
 
+MACRO_COLOR = 'pink'
 
 def main():
   bact_colors = ['blue', 'green']
@@ -59,6 +61,9 @@ def main():
   bact_ai_map = {BactType.BACT_1: AIType.BACT_1, 
               BactType.BACT_2: AIType.BACT_2}
 
+
+  macroGraph = nx.empty_graph(MACRO_INIT_COUNT)
+  macroPos = nx.random_layout(macroGraph)
 
   # initial data structures
   bactGraphs = []
@@ -150,7 +155,7 @@ def main():
       num = bactGraphs[i].number_of_nodes()
       num2 = len(all_coords)
       #print ("NODE COUNT %d coordCOUNT %d", num, num2)
-      nx.draw(bactGraphs[i], all_coords, edge_color=bact_colors[i],
+      nx.draw(bactGraphs[i], all_coords, edge_color=bact_colors[i], alpha=1,
         node_color=bact_all_colors_map[i], with_labels=False, node_size=50)
 
     for i in xrange(AI_TYPE_COUNT):
@@ -164,6 +169,9 @@ def main():
       
       nx.draw(aiGraphs[i], all_coords, 
         node_color=color_map, with_labels=False, node_size=20)
+
+    nx.draw(macroGraph, macroPos, alpha=0.5,
+        node_color=MACRO_COLOR, with_labels=False, node_size=200)
 
     # START OF STEP COUNT % 2 == 0
     if (step_count % 5 != 0):
