@@ -1,16 +1,10 @@
 #!/usr/bin/env python
-"""
-===============
-Bacteria movement
-===============
+"""""""""""""""""""""
+|===================|
+| Bacteria movement |
+|===================|
 
-"""
-#    Copyright (C) 2006-2017
-#    Aric Hagberg <hagberg@lanl.gov>
-#    Dan Schult <dschult@colgate.edu>
-#    Pieter Swart <swart@lanl.gov>
-#    All rights reserved.
-#    BSD license.
+"""""""""""""""""""""
 
 import math
 import time
@@ -31,7 +25,7 @@ def merge(*dicts):
     { k: reduce(lambda d, x: x.get(k, d), dicts, None) for k in reduce(or_, map(lambda x: x.keys(), dicts), set()) }
 
 BACT_COUNT = 10
-AI_COUNT = 10
+AI_COUNT = 5
 AIC_HCOUNT = 4
 AIC_WCOUNT = 4
 
@@ -41,13 +35,13 @@ BACT_CHILD_DIS = 0.1
 AIC_RFRAC = 1.0 / AIC_HCOUNT
 AIC_CFRAC = 1.0 / AIC_WCOUNT
 
-AI_TYPE_COUNT = 1
-BACT_TYPE_COUNT = 1
+AI_TYPE_COUNT = 2
+BACT_TYPE_COUNT = 2
 class AIType:
-  BACT_1 = 0#, BACT_2, TCELL = range(AI_TYPE_COUNT)
+  BACT_1, BACT_2 = range(AI_TYPE_COUNT)
 
 class BactType:
-  BACT_1 = 0#, BACT_2 = range(BACT_TYPE_COUNT)
+  BACT_1, BACT_2 = range(BACT_TYPE_COUNT)
 
 AI_PER_BAC = 1
 
@@ -56,10 +50,10 @@ def main():
   bact_colors = ['blue', 'green']
   bact_dis_thresh = [0.1, 0.05]
   ai_conv_dis_thresh = [0.05, 0.05]
-  ai_colors = ['red', 'orange', 'yellow']
+  ai_colors = ['pink', 'red']
   bact_speed = [0.2, 0.15]
-  bact_ai_map = {BactType.BACT_1: AIType.BACT_1}#, 
-              #BactType.BACT_2: AIType.BACT_2}
+  bact_ai_map = {BactType.BACT_1: AIType.BACT_1, 
+              BactType.BACT_2: AIType.BACT_2}
 
 
   # initial data structures
@@ -132,7 +126,7 @@ def main():
   step_count = 0
   while(1):
     step_count += 1
-    time.sleep(0.5)
+    time.sleep(1)
     
     plt.cla()
 
@@ -141,7 +135,7 @@ def main():
         
     region += 1
     plt.subplot(region)
-    plt.title("p = %6.3f" % (23))
+    plt.title("Bacteria Network Simulation")
 
     for i in xrange(BACT_TYPE_COUNT):
       posDicts = bactPosInfo[i]
@@ -153,7 +147,7 @@ def main():
       num2 = len(all_coords)
       #print ("NODE COUNT %d coordCOUNT %d", num, num2)
       nx.draw(bactGraphs[i], all_coords, 
-        node_color=bact_all_colors_map[i], with_labels=False, node_size=40)
+        node_color=bact_all_colors_map[i], with_labels=False, node_size=50)
 
     for i in xrange(AI_TYPE_COUNT):
       color_map = [ai_colors[i]] * aiGraphs[i].number_of_nodes()
@@ -165,10 +159,10 @@ def main():
       ai_all_coords_map[i] = all_coords
       
       nx.draw(aiGraphs[i], all_coords, 
-        node_color=color_map, with_labels=False, node_size=10)
+        node_color=color_map, with_labels=False, node_size=20)
 
     # START OF STEP COUNT % 2 == 0
-    if (step_count % 10 != 0):
+    if (step_count % 5 != 0):
     #if (True):
       # we have information about the previous positions.
       # so, now go through each and find the quadrant with max number
@@ -276,7 +270,7 @@ def main():
               for r in xrange(AIC_HCOUNT):
                 for c in xrange(AIC_WCOUNT):
                   aiPosInfo[ai][r][c].pop(nodeai, None)
-              bact_all_colors_map[b][nodeb] = 'red'
+              bact_all_colors_map[b][nodeb] = 'orange'
     #END OF STEP COUNT % 2 == 0
     
     else:
