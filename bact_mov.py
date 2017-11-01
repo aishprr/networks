@@ -24,10 +24,11 @@ def merge(*dicts):
     return 
     { k: reduce(lambda d, x: x.get(k, d), dicts, None) for k in reduce(or_, map(lambda x: x.keys(), dicts), set()) }
 
-BACT_COUNT = 10
-AI_COUNT = 5
+BACT_INIT_COUNT = [10, 10]
+AI_INIT_COUNT = [5, 5]
 AIC_HCOUNT = 4
 AIC_WCOUNT = 4
+
 
 BACT_DEG_THRESH = 3
 BACT_CHILD_DIS = 0.1
@@ -35,13 +36,16 @@ BACT_CHILD_DIS = 0.1
 AIC_RFRAC = 1.0 / AIC_HCOUNT
 AIC_CFRAC = 1.0 / AIC_WCOUNT
 
+TOT_BACT_TYPE_COUNT = 2
+TOT_AI_TYPE_COUNT = 2
+
 AI_TYPE_COUNT = 2
 BACT_TYPE_COUNT = 2
 class AIType:
-  BACT_1, BACT_2 = range(AI_TYPE_COUNT)
+  BACT_1, BACT_2 = range(TOT_AI_TYPE_COUNT)
 
 class BactType:
-  BACT_1, BACT_2 = range(BACT_TYPE_COUNT)
+  BACT_1, BACT_2 = range(TOT_BACT_TYPE_COUNT)
 
 AI_PER_BAC = 1
 
@@ -72,7 +76,7 @@ def main():
     aiPosInfo += [a]
 
   for b in xrange(BACT_TYPE_COUNT):
-    bg = nx.empty_graph(BACT_COUNT)
+    bg = nx.empty_graph(BACT_INIT_COUNT[b])
     bactGraphs += [bg]
 
     initialBgPos = nx.random_layout(bg)
@@ -86,7 +90,7 @@ def main():
       bactPosInfo[b][r][c][node] = posArray
 
   for a in xrange(AI_TYPE_COUNT):
-    ai = nx.empty_graph(AI_COUNT)
+    ai = nx.empty_graph(AI_INIT_COUNT[a])
     aiGraphs += [ai]
     initialAiPos = nx.random_layout(ai)
     for node in initialAiPos.keys():
@@ -120,7 +124,7 @@ def main():
 
 
   for i in xrange(BACT_TYPE_COUNT):
-    color_map = [bact_colors[i]] * BACT_COUNT
+    color_map = [bact_colors[i]] * BACT_INIT_COUNT[i]
     bact_all_colors_map[i] = color_map
 
   step_count = 0
