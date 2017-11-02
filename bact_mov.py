@@ -25,7 +25,7 @@ def merge(*dicts):
     return 
     { k: reduce(lambda d, x: x.get(k, d), dicts, None) for k in reduce(or_, map(lambda x: x.keys(), dicts), set()) }
 
-BACT_INIT_COUNT = [2, 40]
+BACT_INIT_COUNT = [20, 40]
 BACT_COUNT_LIMIT = [500, 500]
 AI_INIT_COUNT = [5, 5]
 AIC_HCOUNT = 4
@@ -193,7 +193,7 @@ def main():
         node_color=MACRO_COLOR, with_labels=False, node_size=200)
 
     # START OF STEP COUNT % 2 == 0
-    if (step_count % STEP_MULTIPLE in [1,2,3]):
+    if (step_count % STEP_MULTIPLE in [1,2,3,4, 5, 6, 7, 8]):
     #if (True):
       # we have information about the previous positions.
       # so, now go through each and find the quadrant with max number
@@ -313,7 +313,7 @@ def main():
                   aiPosInfo[ai][r][c].pop(nodeai, None)
               bact_all_colors_map[b][nodeb] = 'orange'
     #END OF STEP COUNT % 2 == 0
-    elif (step_count % STEP_MULTIPLE in [4, 5, 6, 7, 8, 9]):
+    elif (step_count % STEP_MULTIPLE in [9]):
       bactPosInfo = copy.deepcopy(bactPosInfoOrig)
       print "orig " + str(bactPosInfoOrig)
       for b in xrange(BACT_TYPE_COUNT):
@@ -360,13 +360,14 @@ def main():
         print "graph " + str(b)
         print bactPosInfo[b]
         
-    
-    elif (step_count % STEP_MULTIPLE in [0]):
+    elif (False):
+    #elif (step_count % STEP_MULTIPLE in [0]):
       for b in xrange(BACT_TYPE_COUNT):
         if (bact_count[b] >= BACT_COUNT_LIMIT[b]):
           continue
         bg = bactGraphs[b]
         bgn = bg.number_of_nodes();
+
         # we want to double this number
         for i in xrange(bgn):
           bactGraphs[b].add_node(i + bgn)
