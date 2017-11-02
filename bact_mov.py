@@ -31,9 +31,11 @@ AIC_HCOUNT = 4
 AIC_WCOUNT = 4
 MACRO_INIT_COUNT = 10
 
+MACRO_SPEED = 0.05
 BACT_DEG_THRESH = 3
 BACT_CHILD_DIS = 0.1
-BACT_STRENGTH = [0.5, 1]
+# must add to 1
+BACT_STRENGTH = [0.2, 0.8]
 
 AIC_RFRAC = 1.0 / AIC_HCOUNT
 AIC_CFRAC = 1.0 / AIC_WCOUNT
@@ -66,6 +68,8 @@ def main():
 
   macroGraph = nx.empty_graph(MACRO_INIT_COUNT)
   macroPos = nx.random_layout(macroGraph)
+  macroCount = MACRO_INIT_COUNT
+  print macroPos
 
   # initial data structures
   bactGraphs = []
@@ -155,7 +159,7 @@ def main():
         for c in xrange(AIC_WCOUNT):
           all_coords.update(posDicts[r][c])
       num = bactGraphs[i].number_of_nodes()
-      bact_counts[i] = num
+      bact_count[i] = num
       #num2 = len(all_coords)
       #print ("NODE COUNT %d coordCOUNT %d", num, num2)
       nx.draw(bactGraphs[i], all_coords, edge_color=bact_colors[i], alpha=1,
@@ -201,6 +205,13 @@ def main():
         # find the mid point of this quadrant
         (x, y) = ((maxc + 0.5) * AIC_CFRAC,
                   (maxr + 0.5) * AIC_RFRAC)
+        for (m, mCoord) in macroPos.iteritems(): 
+          (dx, dy) = (x - mCoord[0], y - mCoord[1])
+          # we get the direction as above
+          newx = mCoord[0] + dx * BACT_STRENGTH[b] * MACRO_SPEED
+          newy = mCoord[1] + dy * BACT_STRENGTH[b] * MACRO_SPEED
+          macroPos[m][0] = newx
+          macroPos[m][1] = newy
 
         posDicts = bactPosInfo[b]
         all_coords = dict();
