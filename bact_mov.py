@@ -24,7 +24,7 @@ def merge(*dicts):
     return 
     { k: reduce(lambda d, x: x.get(k, d), dicts, None) for k in reduce(or_, map(lambda x: x.keys(), dicts), set()) }
 
-BACT_INIT_COUNT = [10, 10]
+BACT_INIT_COUNT = [20, 40]
 BACT_COUNT_LIMIT = [500, 500]
 AI_INIT_COUNT = [5, 5]
 AIC_HCOUNT = 4
@@ -34,8 +34,9 @@ MACRO_INIT_COUNT = 10
 MACRO_SPEED = 0.05
 BACT_DEG_THRESH = 3
 BACT_CHILD_DIS = 0.1
+
 # must add to 1
-BACT_STRENGTH = [0.2, 0.8]
+BACT_STRENGTH = [0.1, 0.9]
 
 AIC_RFRAC = 1.0 / AIC_HCOUNT
 AIC_CFRAC = 1.0 / AIC_WCOUNT
@@ -64,12 +65,18 @@ def main():
   bact_speed = [0.2, 0.15]
   bact_ai_map = {BactType.BACT_1: AIType.BACT_1, 
               BactType.BACT_2: AIType.BACT_2}
+  inverseStrength = []            
 
 
   macroGraph = nx.empty_graph(MACRO_INIT_COUNT)
   macroPos = nx.random_layout(macroGraph)
   macroCount = MACRO_INIT_COUNT
-  print macroPos
+  
+  totalInverseStrength = 0
+  for elem in BACT_STRENGTH:
+    totalInverseStrength += 1.0 / elem
+  for elem in BACT_STRENGTH:
+    inverseStrength += [(1.0 / elem) / totalInverseStrength]
 
   # initial data structures
   bactGraphs = []
@@ -208,8 +215,8 @@ def main():
         for (m, mCoord) in macroPos.iteritems(): 
           (dx, dy) = (x - mCoord[0], y - mCoord[1])
           # we get the direction as above
-          newx = mCoord[0] + dx * BACT_STRENGTH[b] * MACRO_SPEED
-          newy = mCoord[1] + dy * BACT_STRENGTH[b] * MACRO_SPEED
+          newx = mCoord[0] + dx * inverseStrength[b] * MACRO_SPEED
+          newy = mCoord[1] + dy * inverseStrength[b] * MACRO_SPEED
           macroPos[m][0] = newx
           macroPos[m][1] = newy
 
