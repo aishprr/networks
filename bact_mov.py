@@ -10,6 +10,7 @@ import math
 import time
 from enum import Enum
 import random
+import copy
 
 import numpy as np
 
@@ -24,7 +25,7 @@ def merge(*dicts):
     return 
     { k: reduce(lambda d, x: x.get(k, d), dicts, None) for k in reduce(or_, map(lambda x: x.keys(), dicts), set()) }
 
-BACT_INIT_COUNT = [20, 40]
+BACT_INIT_COUNT = [2, 40]
 BACT_COUNT_LIMIT = [500, 500]
 AI_INIT_COUNT = [5, 5]
 AIC_HCOUNT = 4
@@ -47,8 +48,8 @@ AIC_CFRAC = 1.0 / AIC_WCOUNT
 TOT_BACT_TYPE_COUNT = 2
 TOT_AI_TYPE_COUNT = 2
 
-AI_TYPE_COUNT = 2
-BACT_TYPE_COUNT = 2
+AI_TYPE_COUNT = 1
+BACT_TYPE_COUNT = 1
 class AIType:
   BACT_1, BACT_2 = range(TOT_AI_TYPE_COUNT)
 
@@ -89,7 +90,7 @@ def main():
   for i in xrange(BACT_TYPE_COUNT):
     b = [[dict() for i in range(AIC_WCOUNT)] for j in range(AIC_HCOUNT)]
     bactPosInfoOrig += [b]
-  bactPosInfo = bactPosInfoOrig
+  bactPosInfo = copy.deepcopy(bactPosInfoOrig)
   
   aiPosInfo = []
   for i in xrange(AI_TYPE_COUNT):
@@ -172,8 +173,9 @@ def main():
       bact_count[i] = num
       #num2 = len(all_coords)
       #print ("NODE COUNT %d coordCOUNT %d", num, num2)
-      nx.draw(bactGraphs[i], all_coords, edge_color=bact_colors[i], alpha=1,
-        node_color=bact_all_colors_map[i], with_labels=False, node_size=50)
+      if (num != 0):
+        nx.draw(bactGraphs[i], all_coords, edge_color=bact_colors[i], alpha=1,
+          node_color=bact_all_colors_map[i], with_labels=False, node_size=50)
 
     for i in xrange(AI_TYPE_COUNT):
       color_map = [ai_colors[i]] * aiGraphs[i].number_of_nodes()
@@ -191,7 +193,7 @@ def main():
         node_color=MACRO_COLOR, with_labels=False, node_size=200)
 
     # START OF STEP COUNT % 2 == 0
-    if (step_count % STEP_MULTIPLE in [1,2,3,4,5,6,7]):
+    if (step_count % STEP_MULTIPLE in [1,2,3]):
     #if (True):
       # we have information about the previous positions.
       # so, now go through each and find the quadrant with max number
@@ -209,6 +211,7 @@ def main():
               maxC = c
         maxAIQuadrants += [(maxR,maxC)]
 
+      #bactPosInfo = bactPosInfoOrig
       for b in xrange(BACT_TYPE_COUNT):
         ai = bact_ai_map[b]
         (maxr, maxc) = maxAIQuadrants[ai]
@@ -231,7 +234,7 @@ def main():
         
         bact_all_coords_map[b] = all_coords
 
-        bactPosInfo = bactPosInfoOrig
+        
         for node in all_coords.keys():
           coords = all_coords[node]
           (dx, dy) = (x - coords[0], y - coords[1])
@@ -266,6 +269,8 @@ def main():
       for b in xrange(BACT_TYPE_COUNT):
         # we need to connect the bacteria which are kind of close enough
         all_coords = bact_all_coords_map[b]
+        print "all_coords when connecting bacterial network"
+        print all_coords
         for node1 in all_coords.keys():
           posArray1 = all_coords[node1]
           x1 = posArray1[0]
@@ -308,7 +313,9 @@ def main():
                   aiPosInfo[ai][r][c].pop(nodeai, None)
               bact_all_colors_map[b][nodeb] = 'orange'
     #END OF STEP COUNT % 2 == 0
-    elif (step_count % STEP_MULTIPLE in [8, 9]):
+    elif (step_count % STEP_MULTIPLE in [4, 5, 6, 7, 8, 9]):
+      bactPosInfo = copy.deepcopy(bactPosInfoOrig)
+      print "orig " + str(bactPosInfoOrig)
       for b in xrange(BACT_TYPE_COUNT):
         # remove nodes from the bacteria if it is very close to something
         bg = bactGraphs[b]
@@ -319,22 +326,28 @@ def main():
           bx = posArray[0]
           by = posArray[1]
           for (m, mpos) in macroPos.iteritems():
+            if bnode in removeBgList:
+              continue
             mx = mpos[0]
             my = mpos[1]
             dis = (abs(mx - bx)**2 + abs(my - by)**2)**(0.5)
             if (dis < MACRO_EAT_DIS):
               # I want to remove this particular graph node
               removeBgList += [bnode]
+        print "removing " + str(removeBgList)
         for remove in removeBgList:
           try:
             bg.remove_node(remove)
-            bact_all_coords_map[b].pop(remove)
-          except networkx.exception.NetworkXError:
+            bact_all_coords_map[b].pop(remove, None)
+            
+            
+
+          except nx.exception.NetworkXError:
             continue
 
-
+        print "bact_all_coords_map[b]"
+        print bact_all_coords_map[b]
         all_coords = bact_all_coords_map[b]
-        bactPosInfo = bactPosInfoOrig
         for node in all_coords.keys():
           posArray = all_coords[node]
           x = posArray[0]
@@ -343,6 +356,10 @@ def main():
           r = int(y / AIC_RFRAC)
           bactPosInfo[b][r][c][node] = posArray
 
+        print "bactPosInfo"
+        print "graph " + str(b)
+        print bactPosInfo[b]
+        
     
     elif (step_count % STEP_MULTIPLE in [0]):
       for b in xrange(BACT_TYPE_COUNT):
