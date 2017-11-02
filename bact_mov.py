@@ -31,9 +31,12 @@ AIC_HCOUNT = 4
 AIC_WCOUNT = 4
 MACRO_INIT_COUNT = 10
 
+STEP_MULTIPLE = 10
+
 MACRO_SPEED = 0.05
 BACT_DEG_THRESH = 3
-BACT_CHILD_DIS = 0.1
+BACT_CHILD_DIS = 0.05
+MACRO_EAT_DIS = 0.1
 
 # must add to 1
 BACT_STRENGTH = [0.1, 0.9]
@@ -188,7 +191,7 @@ def main():
         node_color=MACRO_COLOR, with_labels=False, node_size=200)
 
     # START OF STEP COUNT % 2 == 0
-    if (step_count % 5 != 0):
+    if (step_count % STEP_MULTIPLE in [1,2,3,4,5,6,7]):
     #if (True):
       # we have information about the previous positions.
       # so, now go through each and find the quadrant with max number
@@ -305,8 +308,43 @@ def main():
                   aiPosInfo[ai][r][c].pop(nodeai, None)
               bact_all_colors_map[b][nodeb] = 'orange'
     #END OF STEP COUNT % 2 == 0
+    elif (step_count % STEP_MULTIPLE in [8, 9]):
+      for b in xrange(BACT_TYPE_COUNT):
+        # remove nodes from the bacteria if it is very close to something
+        bg = bactGraphs[b]
+        bgList = bg.nodes()
+        removeBgList = []
+        for bnode in bgList:
+          posArray = bact_all_coords_map[b][bnode]
+          bx = posArray[0]
+          by = posArray[1]
+          for (m, mpos) in macroPos.iteritems():
+            mx = mpos[0]
+            my = mpos[1]
+            dis = (abs(mx - bx)**2 + abs(my - by)**2)**(0.5)
+            if (dis < MACRO_EAT_DIS):
+              # I want to remove this particular graph node
+              removeBgList += [bnode]
+        for remove in removeBgList:
+          try:
+            bg.remove_node(remove)
+            bact_all_coords_map[b].pop(remove)
+          except networkx.exception.NetworkXError:
+            continue
+
+
+        all_coords = bact_all_coords_map[b]
+        bactPosInfo = bactPosInfoOrig
+        for node in all_coords.keys():
+          posArray = all_coords[node]
+          x = posArray[0]
+          y = posArray[1]
+          c = int(x / AIC_CFRAC)
+          r = int(y / AIC_RFRAC)
+          bactPosInfo[b][r][c][node] = posArray
+
     
-    else:
+    elif (step_count % STEP_MULTIPLE in [0]):
       for b in xrange(BACT_TYPE_COUNT):
         if (bact_count[b] >= BACT_COUNT_LIMIT[b]):
           continue
@@ -328,9 +366,9 @@ def main():
           #print (node, np.add(value1[1],-BACT_CHILD_DIS), 
           #  np.add(value1[1], BACT_CHILD_DIS))
           value2[:] = value1
-          value2[0] = np.clip(np.random.uniform(np.add(value1[0],-0.05), 
+          value2[0] = np.clip(np.random.uniform(np.add(value1[0],-BACT_CHILD_DIS), 
             np.add(value1[0], 0.05)), 0, 0.999999)
-          value2[1] = np.clip(np.random.uniform(np.add(value1[1],-0.05), 
+          value2[1] = np.clip(np.random.uniform(np.add(value1[1],-BACT_CHILD_DIS), 
             np.add(value1[1],0.05)), 0, 0.999999)
           new_node = node + bgn
           this_bact_all_coords[new_node] = value2
@@ -384,8 +422,7 @@ def main():
           for c in xrange(AIC_WCOUNT):
             all_coords.update(posDicts[r][c])
         ai_all_coords_map[ai] = posDicts
-
-
+    
     plt.draw()
     plt.pause(1e-17)
     
