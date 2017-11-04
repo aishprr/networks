@@ -25,7 +25,7 @@ def merge(*dicts):
     return 
     { k: reduce(lambda d, x: x.get(k, d), dicts, None) for k in reduce(or_, map(lambda x: x.keys(), dicts), set()) }
 
-BACT_INIT_COUNT = [10, 40]
+BACT_INIT_COUNT = [100, 10]
 BACT_COUNT_LIMIT = [500, 500]
 AI_INIT_COUNT = [5, 5]
 AIC_HCOUNT = 4
@@ -48,8 +48,8 @@ AIC_CFRAC = 1.0 / AIC_WCOUNT
 TOT_BACT_TYPE_COUNT = 2
 TOT_AI_TYPE_COUNT = 2
 
-AI_TYPE_COUNT = 1
-BACT_TYPE_COUNT = 1
+AI_TYPE_COUNT = 2
+BACT_TYPE_COUNT = 2
 class AIType:
   BACT_1, BACT_2 = range(TOT_AI_TYPE_COUNT)
 
@@ -91,6 +91,10 @@ def main():
     b = [[dict() for i in range(AIC_WCOUNT)] for j in range(AIC_HCOUNT)]
     bactPosInfoOrig += [b]
   bactPosInfo = copy.deepcopy(bactPosInfoOrig)
+  first = True
+  bact_all_coords_map = dict()
+  bact_all_colors_map = dict()
+  ai_all_coords_map = dict()
   
   aiPosInfo = []
   for i in xrange(AI_TYPE_COUNT):
@@ -103,13 +107,15 @@ def main():
 
     initialBgPos = nx.random_layout(bg)
     
-    for node in initialBgPos.keys():
-      posArray = initialBgPos[node]
-      x = posArray[0]
-      y = posArray[1]
-      c = int(x / AIC_CFRAC)
-      r = int(y / AIC_RFRAC)
-      bactPosInfo[b][r][c][node] = posArray
+    # for node in initialBgPos.keys():
+    #   posArray = initialBgPos[node]
+    #   x = posArray[0]
+    #   y = posArray[1]
+    #   c = int(x / AIC_CFRAC)
+    #   r = int(y / AIC_RFRAC)
+    #   bactPosInfo[b][r][c][node] = posArray
+    bact_all_coords_map[b] = initialBgPos
+    print initialBgPos
 
   for a in xrange(AI_TYPE_COUNT):
     ai = nx.empty_graph(AI_INIT_COUNT[a])
@@ -139,11 +145,7 @@ def main():
               "will be slow.")
         layout = nx.spring_layout
 
-  first = True
-  bact_all_coords_map = dict()
-  bact_all_colors_map = dict()
-  ai_all_coords_map = dict()
-
+  
 
   for i in xrange(BACT_TYPE_COUNT):
     color_map = [bact_colors[i]] * BACT_INIT_COUNT[i]
@@ -163,16 +165,23 @@ def main():
     plt.subplot(region)
     plt.title("Bacteria Network Simulation")
 
+    # update the Bact positions in the grid map
+    for b in xrange(BACT_TYPE_COUNT):
+      all_coords = bact_all_coords_map[b]
+      for node in all_coords.keys():
+        posArray = all_coords[node]
+        x = posArray[0]
+        y = posArray[1]
+        c = int(x / AIC_CFRAC)
+        r = int(y / AIC_RFRAC)
+        bactPosInfo[b][r][c][node] = posArray
+
     for i in xrange(BACT_TYPE_COUNT):
-      posDicts = bactPosInfo[i]
-      all_coords = dict();
-      for r in xrange(AIC_HCOUNT):
-        for c in xrange(AIC_WCOUNT):
-          all_coords.update(posDicts[r][c])
+      all_coords = bact_all_coords_map[i]
       num = bactGraphs[i].number_of_nodes()
       bact_count[i] = num
-      #num2 = len(all_coords)
-      #print ("NODE COUNT %d coordCOUNT %d", num, num2)
+      num2 = len(all_coords)
+      print ("bact %d NODE COUNT %d coordCOUNT %d", i, num, num2)
       if (num != 0):
         nx.draw(bactGraphs[i], all_coords, edge_color=bact_colors[i], alpha=1,
           node_color=bact_all_colors_map[i], with_labels=False, node_size=50)
@@ -269,8 +278,8 @@ def main():
       for b in xrange(BACT_TYPE_COUNT):
         # we need to connect the bacteria which are kind of close enough
         all_coords = bact_all_coords_map[b]
-        print "all_coords when connecting bacterial network"
-        print all_coords
+        #print "all_coords when connecting bacterial network"
+        #print all_coords
         for node1 in all_coords.keys():
           posArray1 = all_coords[node1]
           x1 = posArray1[0]
@@ -281,9 +290,9 @@ def main():
               x2 = posArray2[0]
               y2 = posArray2[1]
               dis = (abs(x1 - x2)**2 + abs(y1 - y2)**2)**(0.5)
-              print "nodes in this bact graph are: " + str(bactGraphs[b].nodes())
-              print "node1 = " + str(node1)
-              print "node2 = " + str(node2)
+              #print "nodes in this bact graph are: " + str(bactGraphs[b].nodes())
+              #print "node1 = " + str(node1)
+              #print "node2 = " + str(node2)
               
               if (dis < bact_dis_thresh[b] 
                 and bactGraphs[b].degree(node1) < BACT_DEG_THRESH
@@ -318,8 +327,8 @@ def main():
     #END OF STEP COUNT % 2 == 0
     elif (step_count % STEP_MULTIPLE in [9]):
       bactPosInfo = copy.deepcopy(bactPosInfoOrig)
-      print "orig " + str(bactPosInfoOrig)
-      print "bactPosInfo copy orig " + str(bactPosInfo)
+      #print "orig " + str(bactPosInfoOrig)
+      #print "bactPosInfo copy orig " + str(bactPosInfo)
       for b in xrange(BACT_TYPE_COUNT):
         # remove nodes from the bacteria if it is very close to something
         bg = bactGraphs[b]
@@ -338,19 +347,16 @@ def main():
             if (dis < MACRO_EAT_DIS):
               # I want to remove this particular graph node
               removeBgList += [bnode]
-        print "removing " + str(removeBgList)
+        #print "removing " + str(removeBgList)
         for remove in removeBgList:
           try:
             bg.remove_node(remove)
             bact_all_coords_map[b].pop(remove, None)
-            
-            
-
           except nx.exception.NetworkXError:
             continue
 
-        print "bact_all_coords_map[b]"
-        print bact_all_coords_map[b]
+        #print "bact_all_coords_map[b]"
+        #print bact_all_coords_map[b]
         all_coords = bact_all_coords_map[b]
         for node in all_coords.keys():
           posArray = all_coords[node]
@@ -360,9 +366,9 @@ def main():
           r = int(y / AIC_RFRAC)
           bactPosInfo[b][r][c][node] = posArray
 
-        print "bactPosInfo"
-        print "graph " + str(b)
-        print bactPosInfo[b]
+        #print "bactPosInfo"
+        #print "graph " + str(b)
+        #print bactPosInfo[b]
         
     #elif (False):
     elif (step_count % STEP_MULTIPLE in [0]):
@@ -377,11 +383,11 @@ def main():
         for i in nodeList:
           max_node_number = max(max_node_number, i)
 
-        print "max node I found uptil now is: " + str(max_node_number)
+        #print "max node I found uptil now is: " + str(max_node_number)
 
         # we want to double this number
         for i in xrange(bgn):
-          print "adding new node number " + str(i + max_node_number + 1)
+          #print "adding new node number " + str(i + max_node_number + 1)
           bactGraphs[b].add_node(i + max_node_number + 1)
         #print "orignumber %d, added number ", bgn, bactGraphs[b].number_of_nodes()
         # this is a dictionary
