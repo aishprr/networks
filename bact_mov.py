@@ -40,9 +40,12 @@ BACT_CHILD_DIS = 0.05
 MACRO_EAT_DIS = 0.1
 MACRO_MAX_BACT_EAT = 5
 
+BACT_DRAW_SIZE = 40
+AI_DRAW_SIZE = 20
+
 # SIZE and BACT_WITHIN_RAD are related
-MACRO_SIZE = 400
-MACRO_BACT_WITHIN_RAD = 0.05
+MACRO_DRAW_SIZE = 400
+MACRO_BACT_WITHIN_RAD = 0.015
 
 # must add to 1
 BACT_STRENGTH = [0.1, 0.9]
@@ -72,7 +75,7 @@ def main():
   bact_colors = ['blue', 'green']
   bact_dis_thresh = [0.1, 0.05]
   ai_conv_dis_thresh = [0.05, 0.05]
-  ai_colors = ['pink', 'red']
+  ai_colors = ['yellow', 'purple']
   bact_speed = [0.2, 0.15]
   bact_ai_map = {BactType.BACT_1: AIType.BACT_1, 
               BactType.BACT_2: AIType.BACT_2}
@@ -194,7 +197,8 @@ def main():
       print ("bact %d NODE COUNT %d coordCOUNT %d", i, num, num2)
       if (num != 0):
         nx.draw(bactGraphs[i], all_coords, edge_color=bact_colors[i], alpha=1,
-          node_color=bact_all_colors_map[i], with_labels=False, node_size=50)
+          node_color=bact_all_colors_map[i], with_labels=False, 
+          node_size=BACT_DRAW_SIZE)
 
     for i in xrange(AI_TYPE_COUNT):
       color_map = [ai_colors[i]] * aiGraphs[i].number_of_nodes()
@@ -206,10 +210,14 @@ def main():
       ai_all_coords_map[i] = all_coords
       
       nx.draw(aiGraphs[i], all_coords, 
-        node_color=color_map, with_labels=False, node_size=20)
+        node_color=color_map, with_labels=False, node_size=AI_DRAW_SIZE)
 
     nx.draw(macroGraph, macroPos, alpha=0.5,
-        node_color=MACRO_COLOR, with_labels=False, node_size=MACRO_SIZE)
+        node_color=MACRO_COLOR, with_labels=False, node_size=MACRO_DRAW_SIZE)
+
+    for m in macroInfo:
+      nx.draw(macroInfo[m][GRAPH], macroInfo[m][GRAPHPOS],
+        node_color='red', with_labels=False, node_size=BACT_DRAW_SIZE)
 
     # START OF STEP COUNT % 2 == 0
     if (step_count % STEP_MULTIPLE in [1,2,3,4, 5, 6, 7, 8]):
@@ -240,10 +248,17 @@ def main():
         for (m, mCoord) in macroPos.iteritems(): 
           (dx, dy) = (x - mCoord[0], y - mCoord[1])
           # we get the direction as above
-          newx = mCoord[0] + dx * inverseStrength[b] * MACRO_SPEED
-          newy = mCoord[1] + dy * inverseStrength[b] * MACRO_SPEED
+          deltaX = dx * inverseStrength[b] * MACRO_SPEED
+          deltaY = dy * inverseStrength[b] * MACRO_SPEED
+          newx = mCoord[0] + deltaX
+          newy = mCoord[1] + deltaY
           macroPos[m][0] = newx
           macroPos[m][1] = newy
+          for mBactNode in macroInfo[m][GRAPHPOS].keys():
+            posArray = macroInfo[m][GRAPHPOS][mBactNode]
+            posArray[0] = posArray[0] + deltaX
+            posArray[1] = posArray[1] + deltaY
+            macroInfo[m][GRAPHPOS][mBactNode] = posArray
 
         posDicts = bactPosInfo[b]
         all_coords = dict();
