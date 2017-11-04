@@ -26,11 +26,11 @@ def merge(*dicts):
     return 
     { k: reduce(lambda d, x: x.get(k, d), dicts, None) for k in reduce(or_, map(lambda x: x.keys(), dicts), set()) }
 
-BACT_INIT_COUNT = [10, 10]
+BACT_INIT_COUNT = [100, 20]
 BACT_COUNT_LIMIT = [500, 500]
 AI_INIT_COUNT = [5, 5]
-AIC_HCOUNT = 4
-AIC_WCOUNT = 4
+AIC_HCOUNT = 10
+AIC_WCOUNT = 10
 MACRO_INIT_COUNT = 10
 HELPTCELL_INIT_COUNT = 10
 KILLTCELL_INIT_COUNT = 2
@@ -45,7 +45,7 @@ BACT_DEG_THRESH = 3
 BACT_CHILD_DIS = 0.05
 MACRO_EAT_DIS = 0.1
 HELPER_MACRO_DIS = 0.15
-MACRO_MAX_BACT_EAT = 5
+MACRO_MAX_BACT_EAT = 2
 
 BACT_DRAW_SIZE = 40
 AI_DRAW_SIZE = 20
@@ -293,22 +293,39 @@ def main():
               maxC = c
         maxAIQuadrants += [(maxR,maxC)]
 
+      maxBactQuadrants = []
+      for b in xrange(BACT_TYPE_COUNT):
+        posDicts = bactPosInfo[b]
+        maxLen = 0
+        (maxR, maxC) = (-1, -1)
+        for r in xrange(AIC_HCOUNT):
+          for c in xrange(AIC_WCOUNT):
+            if (len(posDicts[r][c]) > maxLen):
+              maxLen = len(posDicts[r][c])
+              maxR = r
+              maxC = c
+        maxBactQuadrants += [(maxR,maxC)]
+
       #bactPosInfo = bactPosInfoOrig
       for b in xrange(BACT_TYPE_COUNT):
         ai = bact_ai_map[b]
-        (maxr, maxc) = maxAIQuadrants[ai]
+        (maxAr, maxAc) = maxAIQuadrants[ai]
+        (maxBr, maxBc) = maxBactQuadrants[b]
         # find the mid point of this quadrant
-        (x, y) = ((maxc + 0.5) * AIC_CFRAC,
-                  (maxr + 0.5) * AIC_RFRAC)
+        (ax, ay) = ((maxAc + 0.5) * AIC_CFRAC,
+                  (maxAr + 0.5) * AIC_RFRAC)
+        (bx, by) = ((maxBc + 0.5) * AIC_CFRAC,
+                  (maxBr + 0.5) * AIC_RFRAC)
         for (m, mCoord) in macroPos.iteritems(): 
           macroR = int(mCoord[0] / AIC_RFRAC)
           macroC = int(mCoord[1] / AIC_CFRAC)
-          if ((macroR == maxr) and (macroC == maxc)):
+          # macro move towards bacteria
+          if ((macroR == maxBr) and (macroC == maxBc)):
             # move by a small random amount only, once you get to the place
             deltaX = MACRO_MOVE_IN_GRID * np.random.random_sample()
             deltaY = MACRO_MOVE_IN_GRID * np.random.random_sample()
           else:
-            (dx, dy) = (x - mCoord[0], y - mCoord[1])
+            (dx, dy) = (bx - mCoord[0], by - mCoord[1])
             # we get the direction as above
             deltaX = dx * inverseStrength[b] * MACRO_SPEED
             deltaY = dy * inverseStrength[b] * MACRO_SPEED
@@ -327,12 +344,12 @@ def main():
         for (helpt, helpCoord) in helptcellPos.iteritems():  
           helpR = int(helpCoord[0] / AIC_RFRAC)
           helpC = int(helpCoord[1] / AIC_CFRAC)
-          if ((helpR == maxr) and (helpC == maxc)):
+          if ((helpR == maxBr) and (helpC == maxBc)):
             # move by a small random amount only, once you get to the place
             deltaX = HELP_MOVE_IN_GRID * np.random.random_sample()
             deltaY = HELP_MOVE_IN_GRID * np.random.random_sample()
           else:
-            (dx, dy) = (x - helpCoord[0], y - helpCoord[1])
+            (dx, dy) = (bx - helpCoord[0], by - helpCoord[1])
             deltaX = dx * inverseStrength[b] * HELP_SPEED
             deltaY = dy * inverseStrength[b] * HELP_SPEED
           newx = helpCoord[0] + deltaX
@@ -344,12 +361,12 @@ def main():
         for (killt, killCoord) in killtcellPos.iteritems():  
           killR = int(killCoord[0] / AIC_RFRAC)
           killC = int(killCoord[1] / AIC_CFRAC)
-          if ((killR == maxr) and (killC == maxc)):
+          if ((killR == maxBr) and (killC == maxBc)):
             # move by a small random amount only, once you get to the place
             deltaX = KILL_MOVE_IN_GRID * np.random.random_sample()
             deltaY = KILL_MOVE_IN_GRID * np.random.random_sample()
           else:
-            (dx, dy) = (x - killCoord[0], y - killCoord[1])
+            (dx, dy) = (bx - killCoord[0], by - killCoord[1])
             deltaX = dx * inverseStrength[b] * KILL_SPEED
             deltaY = dy * inverseStrength[b] * KILL_SPEED
           newx = killCoord[0] + deltaX
@@ -365,22 +382,21 @@ def main():
         
         bact_all_coords_map[b] = all_coords
 
-        
+        # bacteria move towards ai
         for node in all_coords.keys():
           coords = all_coords[node]
-          (dx, dy) = (x - coords[0], y - coords[1])
+          (dx, dy) = (ax - coords[0], ay - coords[1])
           # only change if x & y are not already in the same
           # otherwise move them in a random direction
           orig_r = int(coords[1] / AIC_RFRAC)
           orig_c = int(coords[0] / AIC_CFRAC)
-          if (orig_r == maxr and orig_c == maxc):
-            xrandstart = int(maxc * AIC_CFRAC * 10000)
-            xrandend = int((maxc + 1) * AIC_CFRAC * 10000)
-            yrandstart = int((maxr * AIC_RFRAC * 10000))
-            yrandend = int((maxr + 1) * AIC_RFRAC * 10000)
+          if (orig_r == maxAr and orig_c == maxAc):
+            xrandstart = int(maxAc * AIC_CFRAC * 10000)
+            xrandend = int((maxAc + 1) * AIC_CFRAC * 10000)
+            yrandstart = int((maxAr * AIC_RFRAC * 10000))
+            yrandend = int((maxAr + 1) * AIC_RFRAC * 10000)
             newx = random.randint(xrandstart, xrandend) / 10000.0
             newy = random.randint(yrandstart, yrandend) / 10000.0
-            
           else:
             #print orig_r, orig_c , maxr, maxc
             (newx, newy) = (coords[0] + dx*bact_speed[b], 
@@ -534,7 +550,7 @@ def main():
                   macroInfo[m][GRAPHPOS].pop(bact)
                   # don't care about colors in the list for now
                 macroInfo[m][BACTTYPELIST][macroBactType] = []
-                
+
       for b in xrange(BACT_TYPE_COUNT):
         if (bact_count[b] >= BACT_COUNT_LIMIT[b]):
           continue
