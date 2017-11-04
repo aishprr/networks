@@ -268,12 +268,12 @@ def main():
           all_coords[node][0] = newx;
           all_coords[node][1] = newy;
 
-          posArray = all_coords[node]
-          x = posArray[0]
-          y = posArray[1]
-          c = int(x / AIC_CFRAC)
-          r = int(y / AIC_RFRAC)
-          bactPosInfo[b][r][c][node] = posArray
+          # posArray = all_coords[node]
+          # x = posArray[0]
+          # y = posArray[1]
+          # c = int(x / AIC_CFRAC)
+          # r = int(y / AIC_RFRAC)
+          # bactPosInfo[b][r][c][node] = posArray
 
       for b in xrange(BACT_TYPE_COUNT):
         # we need to connect the bacteria which are kind of close enough
@@ -355,22 +355,15 @@ def main():
           except nx.exception.NetworkXError:
             continue
 
-        #print "bact_all_coords_map[b]"
-        #print bact_all_coords_map[b]
-        all_coords = bact_all_coords_map[b]
-        for node in all_coords.keys():
-          posArray = all_coords[node]
-          x = posArray[0]
-          y = posArray[1]
-          c = int(x / AIC_CFRAC)
-          r = int(y / AIC_RFRAC)
-          bactPosInfo[b][r][c][node] = posArray
+        # all_coords = bact_all_coords_map[b]
+        # for node in all_coords.keys():
+        #   posArray = all_coords[node]
+        #   x = posArray[0]
+        #   y = posArray[1]
+        #   c = int(x / AIC_CFRAC)
+        #   r = int(y / AIC_RFRAC)
+        #   bactPosInfo[b][r][c][node] = posArray
 
-        #print "bactPosInfo"
-        #print "graph " + str(b)
-        #print bactPosInfo[b]
-        
-    #elif (False):
     elif (step_count % STEP_MULTIPLE in [0]):
       for b in xrange(BACT_TYPE_COUNT):
         if (bact_count[b] >= BACT_COUNT_LIMIT[b]):
@@ -424,6 +417,8 @@ def main():
         #print bact_all_colors_map[b]
 
         bactPosInfo = copy.deepcopy(bactPosInfoOrig)
+        # need to update this here, because we need this number for the 
+        # AI movement immediately in this step
         for node in bact_all_coords_map[b].keys():
           posArray = bact_all_coords_map[b][node]
           x = posArray[0]
