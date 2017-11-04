@@ -15,6 +15,7 @@ import copy
 import numpy as np
 
 import matplotlib.pyplot as plt
+import matplotlib.image as mpimg
 
 import networkx as nx
 
@@ -31,6 +32,7 @@ AI_INIT_COUNT = [5, 5]
 AIC_HCOUNT = 4
 AIC_WCOUNT = 4
 MACRO_INIT_COUNT = 1
+TCELL_INIT_COUNT = 1
 
 STEP_MULTIPLE = 10
 
@@ -42,6 +44,8 @@ MACRO_MAX_BACT_EAT = 5
 
 BACT_DRAW_SIZE = 40
 AI_DRAW_SIZE = 20
+TCELL_DRAW_SIZE = 300
+TCELL_DRAW_SHAPE = "8"
 
 # SIZE and BACT_WITHIN_RAD are related
 MACRO_DRAW_SIZE = 600
@@ -69,12 +73,14 @@ class BactType:
 AI_PER_BAC = 1
 
 MACRO_COLOR = 'pink'
+TCELL_COLOR = 'red'
 GRAPH = 'graph'
 GRAPHPOS = 'graphpos'
 # this is a list for each type of bacteria inside
 # that macro
 BACTTYPELIST = 'bacttypelist'
 GRAPHCOLORMAP = 'graphcolormap'
+IMAGE = 'image'
 
 def main():
   bact_count = BACT_INIT_COUNT
@@ -91,6 +97,13 @@ def main():
   macroGraph = nx.empty_graph(MACRO_INIT_COUNT)
   macroPos = nx.random_layout(macroGraph)
   macroCount = MACRO_INIT_COUNT
+
+  tcellImg = mpimg.imread('tcell.png')
+  tcellGraph = nx.empty_graph(TCELL_INIT_COUNT)
+  tcellPos = nx.random_layout(macroGraph)
+  tcellCount = TCELL_INIT_COUNT
+  for t in xrange(tcellCount): 
+    tcellGraph.node[t][IMAGE] = tcellImg
 
   macroInfo = dict()
   for node in macroGraph.nodes():
@@ -220,8 +233,15 @@ def main():
       nx.draw(aiGraphs[i], all_coords, 
         node_color=color_map, with_labels=False, node_size=AI_DRAW_SIZE)
 
+    macroCount = macroGraph.number_of_nodes()
     nx.draw(macroGraph, macroPos, alpha=0.5,
         node_color=MACRO_COLOR, with_labels=False, node_size=MACRO_DRAW_SIZE)
+
+    tcellCount = tcellGraph.number_of_nodes()
+    nx.draw(tcellGraph, tcellPos, alpha=0.5, with_labels=False, 
+      node_color=TCELL_COLOR, node_shape=TCELL_DRAW_SHAPE, 
+      node_size=TCELL_DRAW_SIZE)
+
 
     for m in macroInfo:
       print "macro " + str(m) + " color map " + str(macroInfo[m][GRAPHCOLORMAP])
