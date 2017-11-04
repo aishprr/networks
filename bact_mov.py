@@ -44,14 +44,16 @@ BACT_DRAW_SIZE = 40
 AI_DRAW_SIZE = 20
 
 # SIZE and BACT_WITHIN_RAD are related
-MACRO_DRAW_SIZE = 500
-MACRO_BACT_WITHIN_RAD = 0.015
+MACRO_DRAW_SIZE = 600
+MACRO_BACT_WITHIN_RAD = 0.02
 
 # must add to 1
 BACT_STRENGTH = [0.1, 0.9]
 
 AIC_RFRAC = 1.0 / AIC_HCOUNT
 AIC_CFRAC = 1.0 / AIC_WCOUNT
+
+MACRO_MOVE_IN_GRID = AIC_CFRAC / 10.0
 
 TOT_BACT_TYPE_COUNT = 2
 TOT_AI_TYPE_COUNT = 2
@@ -254,14 +256,22 @@ def main():
         (x, y) = ((maxc + 0.5) * AIC_CFRAC,
                   (maxr + 0.5) * AIC_RFRAC)
         for (m, mCoord) in macroPos.iteritems(): 
-          (dx, dy) = (x - mCoord[0], y - mCoord[1])
-          # we get the direction as above
-          deltaX = dx * inverseStrength[b] * MACRO_SPEED
-          deltaY = dy * inverseStrength[b] * MACRO_SPEED
+          macroR = int(mCoord[0] / AIC_RFRAC)
+          macroC = int(mCoord[1] / AIC_CFRAC)
+          if ((macroR == maxr) and (macroC == maxc)):
+            # move by a small random amount only, once you get to the place
+            deltaX = MACRO_MOVE_IN_GRID * np.random.random_sample()
+            deltaY = MACRO_MOVE_IN_GRID * np.random.random_sample()
+          else:
+            (dx, dy) = (x - mCoord[0], y - mCoord[1])
+            # we get the direction as above
+            deltaX = dx * inverseStrength[b] * MACRO_SPEED
+            deltaY = dy * inverseStrength[b] * MACRO_SPEED
           newx = mCoord[0] + deltaX
           newy = mCoord[1] + deltaY
           macroPos[m][0] = newx
           macroPos[m][1] = newy
+          # fix for all the bacteria inside this macro
           for mBactNode in macroInfo[m][GRAPHPOS].keys():
             posArray = macroInfo[m][GRAPHPOS][mBactNode]
             posArray[0] = posArray[0] + deltaX
