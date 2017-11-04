@@ -44,6 +44,7 @@ KILL_SPEED = 0.1
 BACT_DEG_THRESH = 3
 BACT_CHILD_DIS = 0.05
 MACRO_EAT_DIS = 0.1
+KILLTCELL_EAT_DIS = 0.1
 HELPER_MACRO_DIS = 0.15
 MACRO_MAX_BACT_EAT = 2
 
@@ -467,6 +468,8 @@ def main():
           posArray = bact_all_coords_map[b][bnode]
           bx = posArray[0]
           by = posArray[1]
+
+          # check if there's a macrophage close by an kill the bacteria
           for (m, mpos) in macroPos.iteritems():
             if bnode in removeBgList:
               continue
@@ -502,8 +505,22 @@ def main():
                 macroInfo[m][BACTTYPELIST][b] = [newMacBactNode]
               print "adding color " + str(bact_colors[b])
               macroInfo[m][GRAPHCOLORMAP] += [bact_colors[b]]
-              # add a position for this
-        #print "removing " + str(removeBgList)
+          
+          # each killer only kills one in each step
+          fullKillers = []
+          for (killer, killpos) in killtcellPos.iteritems():
+            if bnode in removeBgList:
+              continue
+            if killer in fullKillers:
+              continue
+            kx = killpos[0]
+            ky = killpos[1]
+            dis = (abs(kx - bx)**2 + abs(ky - by)**2)**(0.5)
+            if (dis < KILLTCELL_EAT_DIS):
+              # I want to remove this particular graph node
+              removeBgList += [bnode]
+              fullKillers += [killer]
+              
         for remove in removeBgList:
           try:
             bg.remove_node(remove)
@@ -517,6 +534,7 @@ def main():
         maxKillTcellNode = -1
       else:
         maxKillTcellNode = max(killtcellGraph.nodes())
+
       for (helptnode, helptnodeCoords) in helptcellPos.iteritems():
         # if it is close to a macro node, then I need to then
         # make KILL_PER_MAC number of killer t cells and remove
