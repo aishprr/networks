@@ -69,6 +69,10 @@ AI_PER_BAC = 1
 MACRO_COLOR = 'pink'
 GRAPH = 'graph'
 GRAPHPOS = 'graphpos'
+# this is a list for each type of bacteria inside
+# that macro
+BACTTYPELIST = 'bacttypelist'
+GRAPHCOLORMAP = 'graphcolormap'
 
 def main():
   bact_count = BACT_INIT_COUNT
@@ -93,6 +97,8 @@ def main():
     macroInfo[node] = dict()
     macroInfo[node][GRAPH] = nx.empty_graph(0)
     macroInfo[node][GRAPHPOS] = dict()
+    macroInfo[node][BACTTYPELIST] = dict()
+    macroInfo[node][GRAPHCOLORMAP] = []
     # has no nodes inside that macro for now
     # but when they are there, then I will initialize the thing
   
@@ -217,7 +223,8 @@ def main():
 
     for m in macroInfo:
       nx.draw(macroInfo[m][GRAPH], macroInfo[m][GRAPHPOS],
-        node_color='red', with_labels=False, node_size=BACT_DRAW_SIZE)
+        node_color=macroInfo[m][GRAPHCOLORMAP], 
+        with_labels=False, node_size=BACT_DRAW_SIZE)
 
     # START OF STEP COUNT % 2 == 0
     if (step_count % STEP_MULTIPLE in [1,2,3,4, 5, 6, 7, 8]):
@@ -259,6 +266,11 @@ def main():
             posArray[0] = posArray[0] + deltaX
             posArray[1] = posArray[1] + deltaY
             macroInfo[m][GRAPHPOS][mBactNode] = posArray
+            try:
+              macroInfo[m][BACTTYPELIST][b] += [mBactNode]
+            except KeyError, e:
+              macroInfo[m][BACTTYPELIST][b] = [mBactNode]
+            macroInfo[m][GRAPHCOLORMAP] += [bact_colors[b]]
 
         posDicts = bactPosInfo[b]
         all_coords = dict();
