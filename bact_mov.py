@@ -31,33 +31,46 @@ BACT_COUNT_LIMIT = [500, 500]
 AI_INIT_COUNT = [5, 5]
 AIC_HCOUNT = 4
 AIC_WCOUNT = 4
-MACRO_INIT_COUNT = 1
-TCELL_INIT_COUNT = 1
+MACRO_INIT_COUNT = 10
+HELPTCELL_INIT_COUNT = 10
+KILLTCELL_INIT_COUNT = 2
 
 STEP_MULTIPLE = 10
 
-MACRO_SPEED = 0.05
+MACRO_SPEED = 0.1
+HELP_SPEED = 0.2
+KILL_SPEED = 0.1
+
 BACT_DEG_THRESH = 3
 BACT_CHILD_DIS = 0.05
 MACRO_EAT_DIS = 0.1
+HELPER_MACRO_DIS = 0.15
 MACRO_MAX_BACT_EAT = 5
 
 BACT_DRAW_SIZE = 40
 AI_DRAW_SIZE = 20
-TCELL_DRAW_SIZE = 300
-TCELL_DRAW_SHAPE = "8"
+HELPTCELL_DRAW_SIZE = 300
+HELPTCELL_DRAW_SHAPE = "8"
+KILLTCELL_DRAW_SIZE = 100
+KILLTCELL_DRAW_SHAPE = "s"
 
 # SIZE and BACT_WITHIN_RAD are related
 MACRO_DRAW_SIZE = 600
 MACRO_BACT_WITHIN_RAD = 0.02
 
+KILLTCELL_NEW_HELP = 0.02
+KILL_PER_MAC = 1
+
 # must add to 1
 BACT_STRENGTH = [0.1, 0.9]
+BACT_IN_MACRO_KILL_THRESH = 0.4
 
 AIC_RFRAC = 1.0 / AIC_HCOUNT
 AIC_CFRAC = 1.0 / AIC_WCOUNT
 
 MACRO_MOVE_IN_GRID = AIC_CFRAC / 10.0
+HELP_MOVE_IN_GRID = AIC_CFRAC / 10.0
+KILL_MOVE_IN_GRID = AIC_CFRAC / 10.0
 
 TOT_BACT_TYPE_COUNT = 2
 TOT_AI_TYPE_COUNT = 2
@@ -73,7 +86,8 @@ class BactType:
 AI_PER_BAC = 1
 
 MACRO_COLOR = 'pink'
-TCELL_COLOR = 'red'
+HELPTCELL_COLOR = 'red'
+KILLTCELL_COLOR = 'yellow'
 GRAPH = 'graph'
 GRAPHPOS = 'graphpos'
 # this is a list for each type of bacteria inside
@@ -98,12 +112,19 @@ def main():
   macroPos = nx.random_layout(macroGraph)
   macroCount = MACRO_INIT_COUNT
 
-  tcellImg = mpimg.imread('tcell.png')
-  tcellGraph = nx.empty_graph(TCELL_INIT_COUNT)
-  tcellPos = nx.random_layout(macroGraph)
-  tcellCount = TCELL_INIT_COUNT
-  for t in xrange(tcellCount): 
-    tcellGraph.node[t][IMAGE] = tcellImg
+  helptcellImg = mpimg.imread('tcell.png')
+  helptcellGraph = nx.empty_graph(HELPTCELL_INIT_COUNT)
+  helptcellPos = nx.random_layout(helptcellGraph)
+  helptcellCount = HELPTCELL_INIT_COUNT
+
+  killtcellImg = mpimg.imread('tcell.png')
+  killtcellGraph = nx.empty_graph(KILLTCELL_INIT_COUNT)
+  killtcellPos = nx.random_layout(killtcellGraph)
+  killtcellCount = KILLTCELL_INIT_COUNT
+
+  for t in xrange(helptcellCount): 
+    helptcellGraph.node[t][IMAGE] = helptcellImg
+
 
   macroInfo = dict()
   for node in macroGraph.nodes():
@@ -237,11 +258,15 @@ def main():
     nx.draw(macroGraph, macroPos, alpha=0.5,
         node_color=MACRO_COLOR, with_labels=False, node_size=MACRO_DRAW_SIZE)
 
-    tcellCount = tcellGraph.number_of_nodes()
-    nx.draw(tcellGraph, tcellPos, alpha=0.5, with_labels=False, 
-      node_color=TCELL_COLOR, node_shape=TCELL_DRAW_SHAPE, 
-      node_size=TCELL_DRAW_SIZE)
+    helptcellCount = helptcellGraph.number_of_nodes()
+    nx.draw(helptcellGraph, helptcellPos, alpha=0.5, with_labels=False, 
+      node_color=HELPTCELL_COLOR, node_shape=HELPTCELL_DRAW_SHAPE, 
+      node_size=HELPTCELL_DRAW_SIZE)
 
+    killtcellCount = killtcellGraph.number_of_nodes()
+    nx.draw(killtcellGraph, killtcellPos, alpha=0.5, with_labels=False, 
+      node_color=KILLTCELL_COLOR, node_shape=KILLTCELL_DRAW_SHAPE, 
+      node_size=KILLTCELL_DRAW_SIZE)
 
     for m in macroInfo:
       print "macro " + str(m) + " color map " + str(macroInfo[m][GRAPHCOLORMAP])
@@ -297,7 +322,40 @@ def main():
             posArray[0] = posArray[0] + deltaX
             posArray[1] = posArray[1] + deltaY
             macroInfo[m][GRAPHPOS][mBactNode] = posArray
-            
+
+        # move the helper tcells to the popular place
+        for (helpt, helpCoord) in helptcellPos.iteritems():  
+          helpR = int(helpCoord[0] / AIC_RFRAC)
+          helpC = int(helpCoord[1] / AIC_CFRAC)
+          if ((helpR == maxr) and (helpC == maxc)):
+            # move by a small random amount only, once you get to the place
+            deltaX = HELP_MOVE_IN_GRID * np.random.random_sample()
+            deltaY = HELP_MOVE_IN_GRID * np.random.random_sample()
+          else:
+            (dx, dy) = (x - helpCoord[0], y - helpCoord[1])
+            deltaX = dx * inverseStrength[b] * HELP_SPEED
+            deltaY = dy * inverseStrength[b] * HELP_SPEED
+          newx = helpCoord[0] + deltaX
+          newy = helpCoord[1] + deltaY
+          helptcellPos[helpt][0] = newx
+          helptcellPos[helpt][1] = newy
+
+        # move the killer tcells to the popular place
+        for (killt, killCoord) in killtcellPos.iteritems():  
+          killR = int(killCoord[0] / AIC_RFRAC)
+          killC = int(killCoord[1] / AIC_CFRAC)
+          if ((killR == maxr) and (killC == maxc)):
+            # move by a small random amount only, once you get to the place
+            deltaX = KILL_MOVE_IN_GRID * np.random.random_sample()
+            deltaY = KILL_MOVE_IN_GRID * np.random.random_sample()
+          else:
+            (dx, dy) = (x - killCoord[0], y - killCoord[1])
+            deltaX = dx * inverseStrength[b] * KILL_SPEED
+            deltaY = dy * inverseStrength[b] * KILL_SPEED
+          newx = killCoord[0] + deltaX
+          newy = killCoord[1] + deltaY
+          killtcellPos[killt][0] = newx
+          killtcellPos[killt][1] = newy
 
         posDicts = bactPosInfo[b]
         all_coords = dict();
@@ -399,11 +457,17 @@ def main():
             macroNodeCount = macroInfo[m][GRAPH].number_of_nodes()
             if (macroNodeCount >= MACRO_MAX_BACT_EAT):
               continue
+            if (macroNodeCount == 0):
+              macroNewNode = 0
+            else:
+              macroNewNode = max(macroInfo[m][GRAPH].nodes()) + 1
+            
             mx = mpos[0]
             my = mpos[1]
             dis = (abs(mx - bx)**2 + abs(my - by)**2)**(0.5)
             if (dis < MACRO_EAT_DIS):
-              newMacBactNode = macroNodeCount + 1
+              newMacBactNode = macroNewNode
+              macroNewNode += 1
               # I want to remove this particular graph node
               removeBgList += [bnode]
               # add this node to this macro's thing
@@ -432,6 +496,45 @@ def main():
             continue
 
     elif (step_count % STEP_MULTIPLE in [0]):
+      usedMacros = []
+      if (killtcellGraph.number_of_nodes() == 0):
+        maxKillTcellNode = -1
+      else:
+        maxKillTcellNode = max(killtcellGraph.nodes())
+      for (helptnode, helptnodeCoords) in helptcellPos.iteritems():
+        # if it is close to a macro node, then I need to then
+        # make KILL_PER_MAC number of killer t cells and remove
+        # the weak ones from that macrophage
+        (hx, hy) = (helptnodeCoords[0], helptnodeCoords[1])
+        for (m, mCoord) in macroPos.iteritems():
+          if (m in usedMacros):
+            # only use 1 macro once for 1 helper T cell
+            continue
+          (mx, my) = (mCoord[0], mCoord[1])
+          dis = (abs(mx - hx)**2 + abs(my - hy)**2)**(0.5)
+          if (dis < HELPER_MACRO_DIS):
+            usedMacros += [m]
+            for new in xrange(KILL_PER_MAC):
+              newKillTCellNode = maxKillTcellNode + 1
+              maxKillTcellNode += 1
+              # means we want to make a few killer t cells close to here
+              killtcellGraph.add_node(newKillTCellNode)
+              killtcellx = hx + KILLTCELL_NEW_HELP * np.random.random_sample()
+              killtcelly = hy + KILLTCELL_NEW_HELP * np.random.random_sample()
+              killtcellPos[newKillTCellNode] = np.array([killtcellx, killtcelly])
+            # you added new killer for this macro, so now remove the weak ones 
+            # from this macrophage
+            for macroBactType in macroInfo[m][BACTTYPELIST].keys():
+              if (BACT_STRENGTH[macroBactType] < BACT_IN_MACRO_KILL_THRESH):
+                bactNodeList = macroInfo[m][BACTTYPELIST][macroBactType]
+                for bact in bactNodeList:
+                  # remove each of these from the graph
+                  macroInfo[m][GRAPH].remove_node(bact)
+                  # remove the node position properly
+                  macroInfo[m][GRAPHPOS].pop(bact)
+                  # don't care about colors in the list for now
+                macroInfo[m][BACTTYPELIST][macroBactType] = []
+                
       for b in xrange(BACT_TYPE_COUNT):
         if (bact_count[b] >= BACT_COUNT_LIMIT[b]):
           continue
