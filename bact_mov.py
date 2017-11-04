@@ -38,6 +38,11 @@ MACRO_SPEED = 0.05
 BACT_DEG_THRESH = 3
 BACT_CHILD_DIS = 0.05
 MACRO_EAT_DIS = 0.1
+MACRO_MAX_BACT_EAT = 5
+
+# SIZE and BACT_WITHIN_RAD are related
+MACRO_SIZE = 400
+MACRO_BACT_WITHIN_RAD = 0.05
 
 # must add to 1
 BACT_STRENGTH = [0.1, 0.9]
@@ -59,6 +64,8 @@ class BactType:
 AI_PER_BAC = 1
 
 MACRO_COLOR = 'pink'
+GRAPH = 'graph'
+GRAPHPOS = 'graphpos'
 
 def main():
   bact_count = BACT_INIT_COUNT
@@ -75,6 +82,16 @@ def main():
   macroGraph = nx.empty_graph(MACRO_INIT_COUNT)
   macroPos = nx.random_layout(macroGraph)
   macroCount = MACRO_INIT_COUNT
+
+  macroInfo = dict()
+  for node in macroGraph.nodes():
+    # for each node, initialize the data structures inside the 
+    # dictionary for it
+    macroInfo[node] = dict()
+    macroInfo[node][GRAPH] = nx.empty_graph(0)
+    macroInfo[node][GRAPHPOS] = dict()
+    # has no nodes inside that macro for now
+    # but when they are there, then I will initialize the thing
   
   totalInverseStrength = 0
   for elem in BACT_STRENGTH:
@@ -199,7 +216,7 @@ def main():
         node_color=color_map, with_labels=False, node_size=20)
 
     nx.draw(macroGraph, macroPos, alpha=0.5,
-        node_color=MACRO_COLOR, with_labels=False, node_size=200)
+        node_color=MACRO_COLOR, with_labels=False, node_size=MACRO_SIZE)
 
     # START OF STEP COUNT % 2 == 0
     if (step_count % STEP_MULTIPLE in [1,2,3,4, 5, 6, 7, 8]):
@@ -341,12 +358,26 @@ def main():
           for (m, mpos) in macroPos.iteritems():
             if bnode in removeBgList:
               continue
+            macroNodeCount = macroInfo[m][GRAPH].number_of_nodes()
+            if (macroNodeCount >= MACRO_MAX_BACT_EAT):
+              continue
             mx = mpos[0]
             my = mpos[1]
             dis = (abs(mx - bx)**2 + abs(my - by)**2)**(0.5)
             if (dis < MACRO_EAT_DIS):
               # I want to remove this particular graph node
               removeBgList += [bnode]
+              # add this node to this macro's thing
+              macroInfo[m][GRAPH].add_node(macroNodeCount + 1)
+              randTheta = 2 * np.pi * np.random.random_sample()
+              randRadius = MACRO_BACT_WITHIN_RAD * np.random.random_sample()
+              randX = mx + randRadius * np.cos(randTheta)
+              randY = my + randRadius * np.sin(randTheta)
+              # now clip this between 0 and 0.9999
+              newNodeCoords = np.array([np.clip(randX, 0, 0.999999), 
+                                  np.clip(randY, 0, 0.999999)])
+              macroInfo[m][GRAPHPOS][macroNodeCount + 1] = newNodeCoords
+              # add a position for this
         #print "removing " + str(removeBgList)
         for remove in removeBgList:
           try:
