@@ -31,8 +31,8 @@ BACT_COUNT_LIMIT = [500, 500]
 AI_INIT_COUNT = [5, 5]
 AIC_HCOUNT = 2
 AIC_WCOUNT = 2
-MACRO_INIT_COUNT = 10
-HELPTCELL_INIT_COUNT = 10
+MACRO_INIT_COUNT = 50
+HELPTCELL_INIT_COUNT = 20
 KILLTCELL_INIT_COUNT = 2
 
 STEP_MULTIPLE = 10
@@ -166,9 +166,7 @@ def main():
   for b in xrange(BACT_TYPE_COUNT):
     bg = nx.empty_graph(BACT_INIT_COUNT[b])
     bactGraphs += [bg]
-
     initialBgPos = nx.random_layout(bg)
-    
     bact_all_coords_map[b] = initialBgPos
     print initialBgPos
 
@@ -219,6 +217,7 @@ def main():
     plt.subplot(region)
     plt.title("Bacteria Network Simulation")
 
+    bactPosInfo = copy.deepcopy(bactPosInfoOrig)
     # update the Bact positions in the grid map
     for b in xrange(BACT_TYPE_COUNT):
       all_coords = bact_all_coords_map[b]
@@ -456,7 +455,7 @@ def main():
               bact_all_colors_map[b][nodeb] = 'orange'
     #END OF STEP COUNT % 2 == 0
     elif (step_count % STEP_MULTIPLE in [9]):
-      bactPosInfo = copy.deepcopy(bactPosInfoOrig)
+      
       #print "orig " + str(bactPosInfoOrig)
       #print "bactPosInfo copy orig " + str(bactPosInfo)
       for b in xrange(BACT_TYPE_COUNT):
