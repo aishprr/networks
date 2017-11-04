@@ -124,13 +124,6 @@ def main():
 
     initialBgPos = nx.random_layout(bg)
     
-    # for node in initialBgPos.keys():
-    #   posArray = initialBgPos[node]
-    #   x = posArray[0]
-    #   y = posArray[1]
-    #   c = int(x / AIC_CFRAC)
-    #   r = int(y / AIC_RFRAC)
-    #   bactPosInfo[b][r][c][node] = posArray
     bact_all_coords_map[b] = initialBgPos
     print initialBgPos
 
@@ -275,22 +268,13 @@ def main():
             yrandend = int((maxr + 1) * AIC_RFRAC * 10000)
             newx = random.randint(xrandstart, xrandend) / 10000.0
             newy = random.randint(yrandstart, yrandend) / 10000.0
-            #(newx, newy) = (coords[0] + dx*bact_speed[b], 
-            #                coords[1] + dy*bact_speed[b])
-
+            
           else:
             #print orig_r, orig_c , maxr, maxc
             (newx, newy) = (coords[0] + dx*bact_speed[b], 
                             coords[1] + dy*bact_speed[b])
           all_coords[node][0] = newx;
           all_coords[node][1] = newy;
-
-          # posArray = all_coords[node]
-          # x = posArray[0]
-          # y = posArray[1]
-          # c = int(x / AIC_CFRAC)
-          # r = int(y / AIC_RFRAC)
-          # bactPosInfo[b][r][c][node] = posArray
 
       for b in xrange(BACT_TYPE_COUNT):
         # we need to connect the bacteria which are kind of close enough
@@ -385,15 +369,6 @@ def main():
             bact_all_coords_map[b].pop(remove, None)
           except nx.exception.NetworkXError:
             continue
-
-        # all_coords = bact_all_coords_map[b]
-        # for node in all_coords.keys():
-        #   posArray = all_coords[node]
-        #   x = posArray[0]
-        #   y = posArray[1]
-        #   c = int(x / AIC_CFRAC)
-        #   r = int(y / AIC_RFRAC)
-        #   bactPosInfo[b][r][c][node] = posArray
 
     elif (step_count % STEP_MULTIPLE in [0]):
       for b in xrange(BACT_TYPE_COUNT):
