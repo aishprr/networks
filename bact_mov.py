@@ -68,9 +68,9 @@ BACT_IN_MACRO_KILL_THRESH = 0.4
 AIC_RFRAC = 1.0 / AIC_HCOUNT
 AIC_CFRAC = 1.0 / AIC_WCOUNT
 
-MACRO_MOVE_IN_GRID = AIC_CFRAC / 10.0
-HELP_MOVE_IN_GRID = AIC_CFRAC / 10.0
-KILL_MOVE_IN_GRID = AIC_CFRAC / 10.0
+MACRO_MOVE_IN_GRID = AIC_CFRAC * 1.5
+HELP_MOVE_IN_GRID = AIC_CFRAC * 1.5
+KILL_MOVE_IN_GRID = AIC_CFRAC * 1.5
 
 TOT_BACT_TYPE_COUNT = 2
 TOT_AI_TYPE_COUNT = 2
@@ -182,7 +182,6 @@ def main():
       y = posArray[1]
       c = int(x / AIC_CFRAC)
       r = int(y / AIC_RFRAC)
-
       aiPosInfo[a][r][c][node] = posArray
 
   try:
@@ -274,37 +273,39 @@ def main():
         node_color=macroInfo[m][GRAPHCOLORMAP], 
         with_labels=False, node_size=BACT_DRAW_SIZE)
 
+    maxAIQuadrants = []
+    for a in xrange(AI_TYPE_COUNT):
+      posDicts = aiPosInfo[i]
+      maxLen = 0
+      (maxR, maxC) = (-1, -1)
+      for r in xrange(AIC_HCOUNT):
+        for c in xrange(AIC_WCOUNT):
+          if (len(posDicts[r][c]) > maxLen):
+            maxLen = len(posDicts[r][c])
+            maxR = r
+            maxC = c
+      maxAIQuadrants += [(maxR,maxC)]
+
+    maxBactQuadrants = []
+    for b in xrange(BACT_TYPE_COUNT):
+      posDicts = bactPosInfo[b]
+      maxLen = 0
+      (maxR, maxC) = (-1, -1)
+      for r in xrange(AIC_HCOUNT):
+        for c in xrange(AIC_WCOUNT):
+          if (len(posDicts[r][c]) > maxLen):
+            maxLen = len(posDicts[r][c])
+            maxR = r
+            maxC = c
+      maxBactQuadrants += [(maxR,maxC)]
+
     # START OF STEP COUNT % 2 == 0
     if (step_count % STEP_MULTIPLE in [1,2,3,4, 5, 6, 7, 8]):
     #if (True):
       # we have information about the previous positions.
       # so, now go through each and find the quadrant with max number
       # of ais of each type
-      maxAIQuadrants = []
-      for a in xrange(AI_TYPE_COUNT):
-        posDicts = aiPosInfo[i]
-        maxLen = 0
-        (maxR, maxC) = (-1, -1)
-        for r in xrange(AIC_HCOUNT):
-          for c in xrange(AIC_WCOUNT):
-            if (len(posDicts[r][c]) > maxLen):
-              maxLen = len(posDicts[r][c])
-              maxR = r
-              maxC = c
-        maxAIQuadrants += [(maxR,maxC)]
-
-      maxBactQuadrants = []
-      for b in xrange(BACT_TYPE_COUNT):
-        posDicts = bactPosInfo[b]
-        maxLen = 0
-        (maxR, maxC) = (-1, -1)
-        for r in xrange(AIC_HCOUNT):
-          for c in xrange(AIC_WCOUNT):
-            if (len(posDicts[r][c]) > maxLen):
-              maxLen = len(posDicts[r][c])
-              maxR = r
-              maxC = c
-        maxBactQuadrants += [(maxR,maxC)]
+      
 
       #bactPosInfo = bactPosInfoOrig
       for b in xrange(BACT_TYPE_COUNT):
