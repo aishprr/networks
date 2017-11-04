@@ -25,7 +25,7 @@ def merge(*dicts):
     return 
     { k: reduce(lambda d, x: x.get(k, d), dicts, None) for k in reduce(or_, map(lambda x: x.keys(), dicts), set()) }
 
-BACT_INIT_COUNT = [20, 40]
+BACT_INIT_COUNT = [10, 40]
 BACT_COUNT_LIMIT = [500, 500]
 AI_INIT_COUNT = [5, 5]
 AIC_HCOUNT = 4
@@ -281,6 +281,9 @@ def main():
               x2 = posArray2[0]
               y2 = posArray2[1]
               dis = (abs(x1 - x2)**2 + abs(y1 - y2)**2)**(0.5)
+              print "nodes in this bact graph are: " + str(bactGraphs[b].nodes())
+              print "node1 = " + str(node1)
+              print "node2 = " + str(node2)
               
               if (dis < bact_dis_thresh[b] 
                 and bactGraphs[b].degree(node1) < BACT_DEG_THRESH
@@ -316,6 +319,7 @@ def main():
     elif (step_count % STEP_MULTIPLE in [9]):
       bactPosInfo = copy.deepcopy(bactPosInfoOrig)
       print "orig " + str(bactPosInfoOrig)
+      print "bactPosInfo copy orig " + str(bactPosInfo)
       for b in xrange(BACT_TYPE_COUNT):
         # remove nodes from the bacteria if it is very close to something
         bg = bactGraphs[b]
@@ -360,21 +364,30 @@ def main():
         print "graph " + str(b)
         print bactPosInfo[b]
         
-    elif (False):
-    #elif (step_count % STEP_MULTIPLE in [0]):
+    #elif (False):
+    elif (step_count % STEP_MULTIPLE in [0]):
       for b in xrange(BACT_TYPE_COUNT):
         if (bact_count[b] >= BACT_COUNT_LIMIT[b]):
           continue
         bg = bactGraphs[b]
         bgn = bg.number_of_nodes();
 
+        max_node_number = -1
+        nodeList = bg.nodes()
+        for i in nodeList:
+          max_node_number = max(max_node_number, i)
+
+        print "max node I found uptil now is: " + str(max_node_number)
+
         # we want to double this number
         for i in xrange(bgn):
-          bactGraphs[b].add_node(i + bgn)
+          print "adding new node number " + str(i + max_node_number + 1)
+          bactGraphs[b].add_node(i + max_node_number + 1)
         #print "orignumber %d, added number ", bgn, bactGraphs[b].number_of_nodes()
         # this is a dictionary
         add_all_coords = bact_all_coords_map[b]
         this_bact_all_coords = dict()
+        adding_node_number = 1
         for node in add_all_coords.keys():
           value1 = add_all_coords[node]
           value2 = np.empty_like(value1)
@@ -388,7 +401,8 @@ def main():
             np.add(value1[0], 0.05)), 0, 0.999999)
           value2[1] = np.clip(np.random.uniform(np.add(value1[1],-BACT_CHILD_DIS), 
             np.add(value1[1],0.05)), 0, 0.999999)
-          new_node = node + bgn
+          new_node = adding_node_number + max_node_number
+          adding_node_number = adding_node_number + 1
           this_bact_all_coords[new_node] = value2
           this_bact_all_coords[node] = value1
           #print "node = %d new node = %d", node, new_node
@@ -403,7 +417,7 @@ def main():
         bact_all_colors_map[b] = bact_all_colors_map[b] + [bact_colors[b]] * bgn
         #print bact_all_colors_map[b]
 
-        bactPosInfo = bactPosInfoOrig
+        bactPosInfo = copy.deepcopy(bactPosInfoOrig)
         for node in bact_all_coords_map[b].keys():
           posArray = bact_all_coords_map[b][node]
           x = posArray[0]
