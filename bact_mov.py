@@ -30,7 +30,7 @@ BACT_COUNT_LIMIT = [500, 500]
 AI_INIT_COUNT = [5, 5]
 AIC_HCOUNT = 4
 AIC_WCOUNT = 4
-MACRO_INIT_COUNT = 10
+MACRO_INIT_COUNT = 1
 
 STEP_MULTIPLE = 10
 
@@ -44,7 +44,7 @@ BACT_DRAW_SIZE = 40
 AI_DRAW_SIZE = 20
 
 # SIZE and BACT_WITHIN_RAD are related
-MACRO_DRAW_SIZE = 400
+MACRO_DRAW_SIZE = 500
 MACRO_BACT_WITHIN_RAD = 0.015
 
 # must add to 1
@@ -222,6 +222,7 @@ def main():
         node_color=MACRO_COLOR, with_labels=False, node_size=MACRO_DRAW_SIZE)
 
     for m in macroInfo:
+      print "macro " + str(m) + " color map " + str(macroInfo[m][GRAPHCOLORMAP])
       nx.draw(macroInfo[m][GRAPH], macroInfo[m][GRAPHPOS],
         node_color=macroInfo[m][GRAPHCOLORMAP], 
         with_labels=False, node_size=BACT_DRAW_SIZE)
@@ -266,11 +267,7 @@ def main():
             posArray[0] = posArray[0] + deltaX
             posArray[1] = posArray[1] + deltaY
             macroInfo[m][GRAPHPOS][mBactNode] = posArray
-            try:
-              macroInfo[m][BACTTYPELIST][b] += [mBactNode]
-            except KeyError, e:
-              macroInfo[m][BACTTYPELIST][b] = [mBactNode]
-            macroInfo[m][GRAPHCOLORMAP] += [bact_colors[b]]
+            
 
         posDicts = bactPosInfo[b]
         all_coords = dict();
@@ -376,10 +373,11 @@ def main():
             my = mpos[1]
             dis = (abs(mx - bx)**2 + abs(my - by)**2)**(0.5)
             if (dis < MACRO_EAT_DIS):
+              newMacBactNode = macroNodeCount + 1
               # I want to remove this particular graph node
               removeBgList += [bnode]
               # add this node to this macro's thing
-              macroInfo[m][GRAPH].add_node(macroNodeCount + 1)
+              macroInfo[m][GRAPH].add_node(newMacBactNode)
               randTheta = 2 * np.pi * np.random.random_sample()
               randRadius = MACRO_BACT_WITHIN_RAD * np.random.random_sample()
               randX = mx + randRadius * np.cos(randTheta)
@@ -387,7 +385,13 @@ def main():
               # now clip this between 0 and 0.9999
               newNodeCoords = np.array([np.clip(randX, 0, 0.999999), 
                                   np.clip(randY, 0, 0.999999)])
-              macroInfo[m][GRAPHPOS][macroNodeCount + 1] = newNodeCoords
+              macroInfo[m][GRAPHPOS][newMacBactNode] = newNodeCoords
+              try:
+                macroInfo[m][BACTTYPELIST][b] += [newMacBactNode]
+              except KeyError, e:
+                macroInfo[m][BACTTYPELIST][b] = [newMacBactNode]
+              print "adding color " + str(bact_colors[b])
+              macroInfo[m][GRAPHCOLORMAP] += [bact_colors[b]]
               # add a position for this
         #print "removing " + str(removeBgList)
         for remove in removeBgList:
