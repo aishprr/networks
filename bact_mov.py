@@ -26,9 +26,9 @@ def merge(*dicts):
     return 
     { k: reduce(lambda d, x: x.get(k, d), dicts, None) for k in reduce(or_, map(lambda x: x.keys(), dicts), set()) }
 
-BACT_INIT_COUNT = [100, 20]
-BACT_COUNT_LIMIT = [500, 500]
-AI_INIT_COUNT = [5, 5]
+BACT_INIT_COUNT = [100, 20, 10]
+BACT_COUNT_LIMIT = [500, 500, 500]
+AI_INIT_COUNT = [5, 5, 5]
 AIC_HCOUNT = 2
 AIC_WCOUNT = 2
 MACRO_INIT_COUNT = 50
@@ -48,6 +48,8 @@ KILLTCELL_EAT_DIS = 0.1
 HELPER_MACRO_DIS = 0.15
 MACRO_MAX_BACT_EAT = 2
 
+BACT_IN_MACRO_REPR = [1, 1, 1]
+
 BACT_DRAW_SIZE = 40
 AI_DRAW_SIZE = 20
 HELPTCELL_DRAW_SIZE = 50
@@ -63,7 +65,7 @@ KILLTCELL_NEW_HELP = 0.02
 KILL_PER_MAC = 1
 
 # must add to 1
-BACT_STRENGTH = [0.1, 0.9]
+BACT_STRENGTH = [0.1, 0.2, 0.7]
 BACT_IN_MACRO_KILL_THRESH = 0.4
 
 AIC_RFRAC = 1.0 / AIC_HCOUNT
@@ -73,16 +75,16 @@ MACRO_MOVE_IN_GRID = AIC_CFRAC * 1.5
 HELP_MOVE_IN_GRID = AIC_CFRAC * 1.5
 KILL_MOVE_IN_GRID = AIC_CFRAC * 1.5
 
-TOT_BACT_TYPE_COUNT = 2
-TOT_AI_TYPE_COUNT = 2
+TOT_BACT_TYPE_COUNT = 3
+TOT_AI_TYPE_COUNT = 3
 
-AI_TYPE_COUNT = 2
-BACT_TYPE_COUNT = 2
+AI_TYPE_COUNT = 3
+BACT_TYPE_COUNT = 3
 class AIType:
-  BACT_1, BACT_2 = range(TOT_AI_TYPE_COUNT)
+  BACT_1, BACT_2, BACT_3 = range(TOT_AI_TYPE_COUNT)
 
 class BactType:
-  BACT_1, BACT_2 = range(TOT_BACT_TYPE_COUNT)
+  BACT_1, BACT_2, BACT_3 = range(TOT_BACT_TYPE_COUNT)
 
 AI_PER_BAC = 1
 
@@ -99,13 +101,14 @@ IMAGE = 'image'
 
 def main():
   bact_count = BACT_INIT_COUNT
-  bact_colors = ['blue', 'green']
-  bact_dis_thresh = [0.1, 0.05]
-  ai_conv_dis_thresh = [0.05, 0.05]
-  ai_colors = ['yellow', 'purple']
-  bact_speed = [0.2, 0.15]
+  bact_colors = ['blue', 'green', 'orange']
+  bact_dis_thresh = [0.1, 0.05, 0.05]
+  ai_conv_dis_thresh = [0.05, 0.05, 0.05]
+  ai_colors = ['yellow', 'purple', 'pink']
+  bact_speed = [0.2, 0.15, 0.2]
   bact_ai_map = {BactType.BACT_1: AIType.BACT_1, 
-              BactType.BACT_2: AIType.BACT_2}
+              BactType.BACT_2: AIType.BACT_2, 
+              BactType.BACT_3: AIType.BACT_3}
   inverseStrength = []            
 
 
@@ -156,7 +159,7 @@ def main():
   bactPosInfo = copy.deepcopy(bactPosInfoOrig)
   first = True
   bact_all_coords_map = dict()
-  bact_all_colors_map = dict()
+  #bact_all_colors_map = dict()
   ai_all_coords_map = dict()
   
   aiPosInfo = []
@@ -200,9 +203,9 @@ def main():
 
   
 
-  for i in xrange(BACT_TYPE_COUNT):
-    color_map = [bact_colors[i]] * BACT_INIT_COUNT[i]
-    bact_all_colors_map[i] = color_map
+  # for i in xrange(BACT_TYPE_COUNT):
+  #   color_map = [bact_colors[i]] * BACT_INIT_COUNT[i]
+  #   bact_all_colors_map[i] = color_map
 
   step_count = 0
   while(1):
@@ -238,7 +241,7 @@ def main():
       print ("bact %d NODE COUNT %d coordCOUNT %d", i, num, num2)
       if (num != 0):
         nx.draw(bactGraphs[i], all_coords, edge_color=bact_colors[i], alpha=1,
-          node_color=bact_all_colors_map[i], with_labels=False, 
+          node_color=bact_colors[i], with_labels=False, 
           node_size=BACT_DRAW_SIZE)
 
     for i in xrange(AI_TYPE_COUNT):
@@ -301,13 +304,9 @@ def main():
 
     # START OF STEP COUNT % 2 == 0
     if (step_count % STEP_MULTIPLE in [1,2,3,4, 5, 6, 7, 8]):
-    #if (True):
       # we have information about the previous positions.
       # so, now go through each and find the quadrant with max number
       # of ais of each type
-      
-
-      #bactPosInfo = bactPosInfoOrig
       for b in xrange(BACT_TYPE_COUNT):
         ai = bact_ai_map[b]
         (maxAr, maxAc) = maxAIQuadrants[ai]
@@ -453,7 +452,7 @@ def main():
               for r in xrange(AIC_HCOUNT):
                 for c in xrange(AIC_WCOUNT):
                   aiPosInfo[ai][r][c].pop(nodeai, None)
-              bact_all_colors_map[b][nodeb] = 'orange'
+              #bact_all_colors_map[b][nodeb] = 'orange'
     #END OF STEP COUNT % 2 == 0
     elif (step_count % STEP_MULTIPLE in [9]):
       
@@ -580,13 +579,10 @@ def main():
         for i in nodeList:
           max_node_number = max(max_node_number, i)
 
-        #print "max node I found uptil now is: " + str(max_node_number)
-
         # we want to double this number
         for i in xrange(bgn):
-          #print "adding new node number " + str(i + max_node_number + 1)
           bactGraphs[b].add_node(i + max_node_number + 1)
-        #print "orignumber %d, added number ", bgn, bactGraphs[b].number_of_nodes()
+        
         # this is a dictionary
         add_all_coords = bact_all_coords_map[b]
         this_bact_all_coords = dict()
@@ -594,11 +590,6 @@ def main():
         for node in add_all_coords.keys():
           value1 = add_all_coords[node]
           value2 = np.empty_like(value1)
-          #print (node, value1)
-          #print (node, np.add(value1[0],-BACT_CHILD_DIS), 
-          #  np.add(value1[0], BACT_CHILD_DIS))
-          #print (node, np.add(value1[1],-BACT_CHILD_DIS), 
-          #  np.add(value1[1], BACT_CHILD_DIS))
           value2[:] = value1
           value2[0] = np.clip(np.random.uniform(np.add(value1[0],-BACT_CHILD_DIS), 
             np.add(value1[0], 0.05)), 0, 0.999999)
@@ -608,18 +599,10 @@ def main():
           adding_node_number = adding_node_number + 1
           this_bact_all_coords[new_node] = value2
           this_bact_all_coords[node] = value1
-          #print "node = %d new node = %d", node, new_node
-          #print (node, value1)
-          #print (new_node, value2)
           
-        #print bact_all_coords_map[b]
-        #print this_bact_all_coords
         bact_all_coords_map[b] = this_bact_all_coords
         # they start off at original color
         
-        bact_all_colors_map[b] = bact_all_colors_map[b] + [bact_colors[b]] * bgn
-        #print bact_all_colors_map[b]
-
         bactPosInfo = copy.deepcopy(bactPosInfoOrig)
         # need to update this here, because we need this number for the 
         # AI movement immediately in this step
