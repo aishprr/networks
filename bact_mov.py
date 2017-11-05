@@ -31,7 +31,7 @@ BACT_COUNT_LIMIT = [500, 500, 500]
 AI_INIT_COUNT = [5, 5, 5]
 AIC_HCOUNT = 2
 AIC_WCOUNT = 2
-MACRO_INIT_COUNT = 50
+MACRO_INIT_COUNT = 10
 HELPTCELL_INIT_COUNT = 20
 KILLTCELL_INIT_COUNT = 2
 
@@ -52,10 +52,10 @@ HELPTCELL_DEG_THRESH = 2
 HELPTCELL_EDGE_DIS = 0.08
 
 BACT_IN_MACRO_REPR = [1, 1, 1]
-BACT_IN_MACRO_REPRO_AGE = 0
+BACT_IN_MACRO_REPRO_AGE = 10
 
-BACT_DRAW_SIZE = 40
-AI_DRAW_SIZE = 20
+BACT_DRAW_SIZE = 50
+AI_DRAW_SIZE = 10
 HELPTCELL_DRAW_SIZE = 50
 HELPTCELL_DRAW_SHAPE = "8"
 KILLTCELL_DRAW_SIZE = 50
@@ -91,11 +91,11 @@ class AIType:
 class BactType:
   BACT_1, BACT_2, BACT_3 = range(TOT_BACT_TYPE_COUNT)
 
-AI_PER_BAC = 1
+AI_PER_BAC = 3
 
-MACRO_COLOR = 'pink'
-HELPTCELL_COLOR = 'red'
-KILLTCELL_COLOR = 'yellow'
+MACRO_COLOR = 'salmon'
+HELPTCELL_COLOR = 'blue'
+KILLTCELL_COLOR = 'black'
 GRAPH = 'graph'
 GRAPHPOS = 'graphpos'
 # this is a list for each type of bacteria inside
@@ -107,10 +107,10 @@ BACTEATAGE = 'bacteatage'
 
 def main():
   bact_count = BACT_INIT_COUNT
-  bact_colors = ['blue', 'green', 'orange']
+  bact_colors = ['gold', 'orange', 'red']
   bact_dis_thresh = [0.1, 0.05, 0.05]
   ai_conv_dis_thresh = [0.05, 0.05, 0.05]
-  ai_colors = ['yellow', 'purple', 'pink']
+  ai_colors = ['limegreen', 'yellowgreen', 'green']
   bact_speed = [0.2, 0.15, 0.2]
   bact_ai_map = {BactType.BACT_1: AIType.BACT_1, 
               BactType.BACT_2: AIType.BACT_2, 
@@ -191,6 +191,10 @@ def main():
       y = posArray[1]
       c = int(x / AIC_CFRAC)
       r = int(y / AIC_RFRAC)
+      if (r >= 2):
+        r = 1
+      if (c >= 2):
+        c = 1
       aiPosInfo[a][r][c][node] = posArray
 
   try:
@@ -217,7 +221,7 @@ def main():
   step_count = 0
   while(1):
     step_count += 1
-    time.sleep(1)
+    time.sleep(0.25)
     
     plt.cla()
 
@@ -238,18 +242,18 @@ def main():
         y = posArray[1]
         c = int(x / AIC_CFRAC)
         r = int(y / AIC_RFRAC)
-        if (r == 2):
+        if (r >= 2):
           r = 1
-        if (c == 2):
+        if (c >= 2):
           c = 1
         try:
           bactPosInfo[b][r][c][node] = posArray
         except IndexError:
-          print "index error somewhere"
-          print "b = " + str(b)
-          print "r = " + str(r)
-          print "c = " + str(c)
-          print "node = " + str(node)
+          print "index error somewhere!!!"
+          # print "b = " + str(b)
+          # print "r = " + str(r)
+          # print "c = " + str(c)
+          # print "node = " + str(node)
 
     for i in xrange(BACT_TYPE_COUNT):
       all_coords = bact_all_coords_map[i]
@@ -263,6 +267,7 @@ def main():
           node_size=BACT_DRAW_SIZE)
 
     for i in xrange(AI_TYPE_COUNT):
+      # print ai_colors[i], aiGraphs[i].number_of_nodes()
       color_map = [ai_colors[i]] * aiGraphs[i].number_of_nodes()
       posDicts = aiPosInfo[i]
       all_coords = dict();
@@ -279,12 +284,12 @@ def main():
         node_color=MACRO_COLOR, with_labels=False, node_size=MACRO_DRAW_SIZE)
 
     helptcellCount = helptcellGraph.number_of_nodes()
-    nx.draw(helptcellGraph, helptcellPos, alpha=0.5, with_labels=False, 
+    nx.draw(helptcellGraph, helptcellPos, with_labels=False, 
       node_color=HELPTCELL_COLOR, node_shape=HELPTCELL_DRAW_SHAPE, 
       node_size=HELPTCELL_DRAW_SIZE, edge_color=HELPTCELL_COLOR)
 
     killtcellCount = killtcellGraph.number_of_nodes()
-    nx.draw(killtcellGraph, killtcellPos, alpha=0.5, with_labels=False, 
+    nx.draw(killtcellGraph, killtcellPos, with_labels=False, 
       node_color=KILLTCELL_COLOR, node_shape=KILLTCELL_DRAW_SHAPE, 
       node_size=KILLTCELL_DRAW_SIZE)
 
@@ -617,8 +622,8 @@ def main():
             newNodeStartID = max(macroInfo[m][GRAPH].nodes()) + 1
           for oldNode in macroInfo[m][BACTTYPELIST][macroBactType]:
             # only then can you reproduce
-            print oldNode
-            print macroInfo[m][BACTEATAGE]
+            # print oldNode
+            # print macroInfo[m][BACTEATAGE]
 
             if (step_count - macroInfo[m][BACTEATAGE][oldNode] > BACT_IN_MACRO_REPRO_AGE):
               for newNodePerOldNode in xrange(BACT_IN_MACRO_REPR[macroBactType]):
@@ -686,6 +691,10 @@ def main():
           y = posArray[1]
           c = int(x / AIC_CFRAC)
           r = int(y / AIC_RFRAC)
+          if (r >= 2):
+            r = 1
+          if (c >= 2):
+            c = 1
           bactPosInfo[b][r][c][node] = posArray
 
       # change the AI number, add more of them
