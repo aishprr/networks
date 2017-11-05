@@ -48,6 +48,10 @@ KILLTCELL_EAT_DIS = 0.1
 HELPER_MACRO_DIS = 0.15
 MACRO_MAX_BACT_EAT = 2
 
+HELPTCELL_DEG_THRESH = 2
+HELPTCELL_EDGE_DIS = 0.08
+
+
 BACT_IN_MACRO_REPR = [1, 1, 1]
 
 BACT_DRAW_SIZE = 40
@@ -172,7 +176,7 @@ def main():
     bactGraphs += [bg]
     initialBgPos = nx.random_layout(bg)
     bact_all_coords_map[b] = initialBgPos
-    print initialBgPos
+    #print initialBgPos
 
   for a in xrange(AI_TYPE_COUNT):
     ai = nx.empty_graph(AI_INIT_COUNT[a])
@@ -238,7 +242,7 @@ def main():
       num = bactGraphs[i].number_of_nodes()
       bact_count[i] = num
       num2 = len(all_coords)
-      print ("bact %d NODE COUNT %d coordCOUNT %d", i, num, num2)
+      #print ("bact %d NODE COUNT %d coordCOUNT %d", i, num, num2)
       if (num != 0):
         nx.draw(bactGraphs[i], all_coords, edge_color=bact_colors[i], alpha=1,
           node_color=bact_colors[i], with_labels=False, 
@@ -263,7 +267,7 @@ def main():
     helptcellCount = helptcellGraph.number_of_nodes()
     nx.draw(helptcellGraph, helptcellPos, alpha=0.5, with_labels=False, 
       node_color=HELPTCELL_COLOR, node_shape=HELPTCELL_DRAW_SHAPE, 
-      node_size=HELPTCELL_DRAW_SIZE)
+      node_size=HELPTCELL_DRAW_SIZE, edge_color=HELPTCELL_COLOR)
 
     killtcellCount = killtcellGraph.number_of_nodes()
     nx.draw(killtcellGraph, killtcellPos, alpha=0.5, with_labels=False, 
@@ -271,7 +275,7 @@ def main():
       node_size=KILLTCELL_DRAW_SIZE)
 
     for m in macroInfo:
-      print "macro " + str(m) + " color map " + str(macroInfo[m][GRAPHCOLORMAP])
+      #print "macro " + str(m) + " color map " + str(macroInfo[m][GRAPHCOLORMAP])
       nx.draw(macroInfo[m][GRAPH], macroInfo[m][GRAPHPOS],
         node_color=macroInfo[m][GRAPHCOLORMAP], 
         with_labels=False, node_size=BACT_DRAW_SIZE)
@@ -453,6 +457,20 @@ def main():
                 for c in xrange(AIC_WCOUNT):
                   aiPosInfo[ai][r][c].pop(nodeai, None)
               #bact_all_colors_map[b][nodeb] = 'orange'
+      helptcelllist = helptcellPos.items()
+      for i in xrange(len(helptcelllist)):
+        for j in xrange(i):
+          (hc1, hCoords1) = helptcelllist[i]
+          (hc2, hCoords2) = helptcelllist[j]
+          if ((helptcellGraph.degree(hc1) >= HELPTCELL_DEG_THRESH) or
+                (helptcellGraph.degree(hc2) >= HELPTCELL_DEG_THRESH)):
+            continue
+          (hc1x, hc1y) = (hCoords1[0], hCoords1[1])
+          (hc2x, hc2y) = (hCoords2[0], hCoords2[1])
+          dis = (abs(hc1x - hc2x)**2 + abs(hc1y - hc2y)**2)**(0.5)
+          if (dis < HELPTCELL_EDGE_DIS):
+            helptcellGraph.add_edge(hc1, hc2)
+
     #END OF STEP COUNT % 2 == 0
     elif (step_count % STEP_MULTIPLE in [9]):
       
@@ -502,7 +520,7 @@ def main():
                 macroInfo[m][BACTTYPELIST][b] += [newMacBactNode]
               except KeyError, e:
                 macroInfo[m][BACTTYPELIST][b] = [newMacBactNode]
-              print "adding color " + str(bact_colors[b])
+              #print "adding color " + str(bact_colors[b])
               macroInfo[m][GRAPHCOLORMAP] += [bact_colors[b]]
           
           # each killer only kills one in each step
