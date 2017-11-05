@@ -238,6 +238,10 @@ def main():
         y = posArray[1]
         c = int(x / AIC_CFRAC)
         r = int(y / AIC_RFRAC)
+        if (r == 2):
+          r = 1
+        if (c == 2):
+          c = 1
         try:
           bactPosInfo[b][r][c][node] = posArray
         except IndexError:
