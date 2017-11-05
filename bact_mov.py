@@ -51,8 +51,8 @@ MACRO_MAX_BACT_EAT = 2
 HELPTCELL_DEG_THRESH = 2
 HELPTCELL_EDGE_DIS = 0.08
 
-
 BACT_IN_MACRO_REPR = [1, 1, 1]
+BACT_IN_MACRO_REPRO_AGE = 0
 
 BACT_DRAW_SIZE = 40
 AI_DRAW_SIZE = 20
@@ -71,6 +71,7 @@ KILL_PER_MAC = 1
 # must add to 1
 BACT_STRENGTH = [0.1, 0.2, 0.7]
 BACT_IN_MACRO_KILL_THRESH = 0.4
+BACT_IN_MACRO_REPRO_THRESH = 0.4
 
 AIC_RFRAC = 1.0 / AIC_HCOUNT
 AIC_CFRAC = 1.0 / AIC_WCOUNT
@@ -102,6 +103,7 @@ GRAPHPOS = 'graphpos'
 BACTTYPELIST = 'bacttypelist'
 GRAPHCOLORMAP = 'graphcolormap'
 IMAGE = 'image'
+BACTEATAGE = 'bacteatage'
 
 def main():
   bact_count = BACT_INIT_COUNT
@@ -143,6 +145,7 @@ def main():
     macroInfo[node][GRAPHPOS] = dict()
     macroInfo[node][BACTTYPELIST] = dict()
     macroInfo[node][GRAPHCOLORMAP] = []
+    macroInfo[node][BACTEATAGE] = dict()
     # has no nodes inside that macro for now
     # but when they are there, then I will initialize the thing
   
@@ -235,7 +238,14 @@ def main():
         y = posArray[1]
         c = int(x / AIC_CFRAC)
         r = int(y / AIC_RFRAC)
-        bactPosInfo[b][r][c][node] = posArray
+        try:
+          bactPosInfo[b][r][c][node] = posArray
+        except IndexError:
+          print "index error somewhere"
+          print "b = " + str(b)
+          print "r = " + str(r)
+          print "c = " + str(c)
+          print "node = " + str(node)
 
     for i in xrange(BACT_TYPE_COUNT):
       all_coords = bact_all_coords_map[i]
@@ -508,8 +518,9 @@ def main():
               removeBgList += [bnode]
               # add this node to this macro's thing
               macroInfo[m][GRAPH].add_node(newMacBactNode)
+              macroInfo[m][BACTEATAGE][newMacBactNode] = step_count
               randTheta = 2 * np.pi * np.random.random_sample()
-              randRadius = MACRO_BACT_WITHIN_RAD * np.random.random_sample()
+              randRadius = MACRO_BACT_WITHIN_RAD# * np.random.random_sample()
               randX = mx + randRadius * np.cos(randTheta)
               randY = my + randRadius * np.sin(randTheta)
               # now clip this between 0 and 0.9999
@@ -546,6 +557,7 @@ def main():
             continue
 
     elif (step_count % STEP_MULTIPLE in [0]):
+      
       usedMacros = []
       if (killtcellGraph.number_of_nodes() == 0):
         maxKillTcellNode = -1
@@ -583,8 +595,48 @@ def main():
                   macroInfo[m][GRAPH].remove_node(bact)
                   # remove the node position properly
                   macroInfo[m][GRAPHPOS].pop(bact)
+                  macroInfo[m][BACTEATAGE].pop(bact)
                   # don't care about colors in the list for now
                 macroInfo[m][BACTTYPELIST][macroBactType] = []
+
+      for (m, mCoord) in macroPos.iteritems():
+        mx = mCoord[0]
+        my = mCoord[1]
+        for macroBactType in macroInfo[m][BACTTYPELIST].keys():
+          # for each type of bacteria
+          if (BACT_STRENGTH[macroBactType] < BACT_IN_MACRO_REPRO_THRESH):
+            continue
+          # else we want to actually reproduce for everything
+          if (macroInfo[m][GRAPH].number_of_nodes() == 0):
+            newNodeStartID = 0
+          else:
+            newNodeStartID = max(macroInfo[m][GRAPH].nodes()) + 1
+          for oldNode in macroInfo[m][BACTTYPELIST][macroBactType]:
+            # only then can you reproduce
+            print oldNode
+            print macroInfo[m][BACTEATAGE]
+
+            if (step_count - macroInfo[m][BACTEATAGE][oldNode] > BACT_IN_MACRO_REPRO_AGE):
+              for newNodePerOldNode in xrange(BACT_IN_MACRO_REPR[macroBactType]):
+                newMacBactNode = newNodeStartID
+                newNodeStartID += 1
+                macroInfo[m][GRAPH].add_node(newMacBactNode)
+                macroInfo[m][BACTEATAGE][newMacBactNode] = step_count
+                randTheta = 2 * np.pi * np.random.random_sample()
+                randRadius = MACRO_BACT_WITHIN_RAD #* np.random.random_sample()
+                randX = mx + randRadius * np.cos(randTheta)
+                randY = my + randRadius * np.sin(randTheta)
+                # now clip this between 0 and 0.9999
+                newNodeCoords = np.array([np.clip(randX, 0, 0.999999), 
+                                    np.clip(randY, 0, 0.999999)])
+                macroInfo[m][GRAPHPOS][newMacBactNode] = newNodeCoords
+                try:
+                  macroInfo[m][BACTTYPELIST][b] += [newMacBactNode]
+                except KeyError, e:
+                  macroInfo[m][BACTTYPELIST][b] = [newMacBactNode]
+                #print "adding color " + str(bact_colors[b])
+                macroInfo[m][GRAPHCOLORMAP] += [bact_colors[macroBactType]]
+
 
       for b in xrange(BACT_TYPE_COUNT):
         if (bact_count[b] >= BACT_COUNT_LIMIT[b]):
