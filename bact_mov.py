@@ -26,7 +26,7 @@ def merge(*dicts):
     return 
     { k: reduce(lambda d, x: x.get(k, d), dicts, None) for k in reduce(or_, map(lambda x: x.keys(), dicts), set()) }
 
-BACT_INIT_COUNT = [100, 20, 10]
+BACT_INIT_COUNT = [200, 150, 100]
 BACT_COUNT_LIMIT = [500, 500, 500]
 AI_INIT_COUNT = [5, 5, 5]
 AIC_HCOUNT = 2
@@ -51,8 +51,8 @@ MACRO_MAX_BACT_EAT = 2
 HELPTCELL_DEG_THRESH = 2
 HELPTCELL_EDGE_DIS = 0.08
 
-BACT_IN_MACRO_REPR = [1, 1, 1]
-BACT_IN_MACRO_REPRO_AGE = 10
+BACT_IN_MACRO_REPR = [1, 1, 3]
+BACT_IN_MACRO_REPRO_AGE = 0
 
 BACT_DRAW_SIZE = 50
 AI_DRAW_SIZE = 10
@@ -69,7 +69,7 @@ KILLTCELL_NEW_HELP = 0.02
 KILL_PER_MAC = 1
 
 # must add to 1
-BACT_STRENGTH = [0.1, 0.2, 0.7]
+BACT_STRENGTH =  [0.1, 0.2, 0.7]
 BACT_IN_MACRO_KILL_THRESH = 0.4
 BACT_IN_MACRO_REPRO_THRESH = 0.4
 
@@ -79,6 +79,8 @@ AIC_CFRAC = 1.0 / AIC_WCOUNT
 MACRO_MOVE_IN_GRID = AIC_CFRAC * 1.5
 HELP_MOVE_IN_GRID = AIC_CFRAC * 1.5
 KILL_MOVE_IN_GRID = AIC_CFRAC * 1.5
+
+BACT_RAND_LIMITS = [[[0, 0.5], [0, 0.5]], [[0, 0.5], [0.5, 1]], [[0.5, 1], [0, 0.5]]] 
 
 TOT_BACT_TYPE_COUNT = 3
 TOT_AI_TYPE_COUNT = 3
@@ -178,7 +180,18 @@ def main():
     bg = nx.empty_graph(BACT_INIT_COUNT[b])
     bactGraphs += [bg]
     initialBgPos = nx.random_layout(bg)
-    bact_all_coords_map[b] = initialBgPos
+    #print type(initialBgPos)
+    newBgPos = dict()
+    for (node, nodeCoords) in initialBgPos.iteritems():
+      nxx = nodeCoords[0]
+      nyy = nodeCoords[1]
+      limits = BACT_RAND_LIMITS[b]
+      nxx = limits[0][0] + (limits[0][1] - limits[0][0])* nxx
+      nyy = limits[1][0] + (limits[1][1] - limits[1][0])* nyy
+      newBgPos[node] = np.array([nxx, nyy])
+
+    bact_all_coords_map[b] = newBgPos
+    #print newBgPos
     #print initialBgPos
 
   for a in xrange(AI_TYPE_COUNT):
@@ -221,7 +234,7 @@ def main():
   step_count = 0
   while(1):
     step_count += 1
-    time.sleep(0.25)
+    time.sleep(0.5)
     
     plt.cla()
 
@@ -255,16 +268,19 @@ def main():
           # print "c = " + str(c)
           # print "node = " + str(node)
 
+    bactCountList = []
     for i in xrange(BACT_TYPE_COUNT):
       all_coords = bact_all_coords_map[i]
       num = bactGraphs[i].number_of_nodes()
       bact_count[i] = num
+      bactCountList += [num]
       num2 = len(all_coords)
       #print ("bact %d NODE COUNT %d coordCOUNT %d", i, num, num2)
       if (num != 0):
         nx.draw(bactGraphs[i], all_coords, edge_color=bact_colors[i], alpha=1,
           node_color=bact_colors[i], with_labels=False, 
           node_size=BACT_DRAW_SIZE)
+    print step_count, bactCountList
 
     for i in xrange(AI_TYPE_COUNT):
       # print ai_colors[i], aiGraphs[i].number_of_nodes()
@@ -326,7 +342,7 @@ def main():
       maxBactQuadrants += [(maxR,maxC)]
 
     # START OF STEP COUNT % 2 == 0
-    if (step_count % STEP_MULTIPLE in [1,2,3,4, 5, 6, 7, 8]):
+    if (step_count % STEP_MULTIPLE in [1,2,3,6, 7, 8]):
       # we have information about the previous positions.
       # so, now go through each and find the quadrant with max number
       # of ais of each type
@@ -491,7 +507,7 @@ def main():
             helptcellGraph.add_edge(hc1, hc2)
 
     #END OF STEP COUNT % 2 == 0
-    elif (step_count % STEP_MULTIPLE in [9]):
+    elif (step_count % STEP_MULTIPLE in [4, 9]):
       
       #print "orig " + str(bactPosInfoOrig)
       #print "bactPosInfo copy orig " + str(bactPosInfo)
@@ -565,7 +581,7 @@ def main():
           except nx.exception.NetworkXError:
             continue
 
-    elif (step_count % STEP_MULTIPLE in [0]):
+    elif (step_count % STEP_MULTIPLE in [0, 5]):
       
       usedMacros = []
       if (killtcellGraph.number_of_nodes() == 0):
