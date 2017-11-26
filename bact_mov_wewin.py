@@ -72,9 +72,9 @@ KILL_PER_MAC = 6
 KILL_DISPR_BAC_THRESH = 0
 
 # must add to 1
-BACT_STRENGTH =  [0.33, 0.33, 0.33]
-BACT_IN_MACRO_KILL_THRESH = 0.5
-BACT_IN_MACRO_REPRO_THRESH = 0.5
+BACT_STRENGTH =  [0.1, 0.2, 0.7]
+BACT_IN_MACRO_KILL_THRESH = 0.4
+BACT_IN_MACRO_REPRO_THRESH = 0.4
 
 AIC_RFRAC = 1.0 / AIC_HCOUNT
 AIC_CFRAC = 1.0 / AIC_WCOUNT
@@ -111,11 +111,9 @@ IMAGE = 'image'
 BACTEATAGE = 'bacteatage'
 
 def main():
-
-  global BACT_STRENGTH
   bact_count = BACT_INIT_COUNT
   bact_colors = ['gold', 'orange', 'red']
-  bact_dis_thresh = [0.05, 0.05, 0.05]
+  bact_dis_thresh = [0.1, 0.05, 0.05]
   ai_conv_dis_thresh = [0.05, 0.05, 0.05]
   ai_colors = ['limegreen', 'yellowgreen', 'green']
   bact_speed = [0.2, 0.15, 0.2]
@@ -241,7 +239,6 @@ def main():
   #   bact_all_colors_map[i] = color_map
 
   step_count = 0
-  bactCountList = BACT_INIT_COUNT
   while(1):
 
     for (m, mpos) in macroPos.iteritems():
@@ -287,8 +284,6 @@ def main():
           # print "c = " + str(c)
           # print "node = " + str(node)
 
-
-    prevBacCountList = copy.deepcopy(bactCountList)
     bactCountList = []
     for i in xrange(BACT_TYPE_COUNT):
       all_coords = bact_all_coords_map[i]
@@ -301,17 +296,7 @@ def main():
         nx.draw(bactGraphs[i], all_coords, edge_color=bact_colors[i], alpha=1,
           node_color=bact_colors[i], with_labels=False, 
           node_size=BACT_DRAW_SIZE)
-        print nx.number_connected_components(bactGraphs[i])
-        connected_comp = 0
-        if (BACT_STRENGTH[i] > BACT_IN_MACRO_KILL_THRESH):
-          continue
-        print prevBacCountList, bactCountList
-        #if (i-1 >= 0 and ((prevBacCountList[i-1] - bactCountList[i-1]) > 10)):
-        #  BACT_STRENGTH[i] += 0.03
-        if (i-1 >= 0 and (nx.number_connected_components(bactGraphs[i-1]) < bact_count[i-1] / 3)):
-          BACT_STRENGTH[i] += 0.03
-
-    print step_count, bactCountList, BACT_STRENGTH
+    print step_count, bactCountList, killtcellGraph.number_of_nodes()
 
     for i in xrange(AI_TYPE_COUNT):
       # print ai_colors[i], aiGraphs[i].number_of_nodes()
@@ -664,6 +649,81 @@ def main():
             # print str(bactType) + " adding new node " + str(newNodeID)
             # print str(bactType) + " new number of nodes = " + str(newbg.number_of_nodes())
             # print str(bactType) + " should match with " + str(len(bact_all_coords_map[bactType].keys()))
+
+      # #print "orig " + str(bactPosInfoOrig)
+      # #print "bactPosInfo copy orig " + str(bactPosInfo)
+      # for b in xrange(BACT_TYPE_COUNT):
+      #   # remove nodes from the bacteria if it is very close to something
+      #   bg = bactGraphs[b]
+      #   bgList = bg.nodes()
+      #   removeBgList = []
+        
+      #   for bnode in bgList:
+      #     posArray = bact_all_coords_map[b][bnode]
+      #     bx = posArray[0]
+      #     by = posArray[1]
+      #     # check if there's a macrophage close by an kill the bacteria
+      #     for (m, mpos) in macroPos.iteritems():
+      #       if m in deadMacros:
+      #         continue
+      #       if bnode in removeBgList:
+      #         continue
+      #       macroNodeCount = macroInfo[m][GRAPH].number_of_nodes()
+      #       if (macroNodeCount >= MACRO_MAX_BACT_EAT):
+      #         continue
+      #       if (macroNodeCount == 0):
+      #         macroNewNode = 0
+      #       else:
+      #         macroNewNode = max(macroInfo[m][GRAPH].nodes()) + 1
+            
+      #       mx = mpos[0]
+      #       my = mpos[1]
+      #       dis = (abs(mx - bx)**2 + abs(my - by)**2)**(0.5)
+      #       if (dis < MACRO_EAT_DIS):
+      #         newMacBactNode = macroNewNode
+      #         macroNewNode += 1
+      #         # I want to remove this particular graph node
+      #         removeBgList += [bnode]
+      #         # add this node to this macro's thing
+      #         macroInfo[m][GRAPH].add_node(newMacBactNode)
+      #         macroInfo[m][BACTEATAGE][newMacBactNode] = step_count
+      #         randTheta = 2 * np.pi * np.random.random_sample()
+      #         randRadius = MACRO_BACT_WITHIN_RAD# * np.random.random_sample()
+      #         randX = mx + randRadius * np.cos(randTheta)
+      #         randY = my + randRadius * np.sin(randTheta)
+      #         # now clip this between 0 and 0.9999
+      #         newNodeCoords = np.array([np.clip(randX, 0, 0.999999), 
+      #                             np.clip(randY, 0, 0.999999)])
+      #         macroInfo[m][GRAPHPOS][newMacBactNode] = newNodeCoords
+      #         try:
+      #           macroInfo[m][BACTTYPELIST][b] += [newMacBactNode]
+      #         except KeyError, e:
+      #           macroInfo[m][BACTTYPELIST][b] = [newMacBactNode]
+      #         #print "adding color " + str(bact_colors[b])
+      #         macroInfo[m][GRAPHCOLORMAP] += [bact_colors[b]]
+          
+      #     # each killer only kills one in each step
+      #     fullKillers = []
+      #     for (killer, killpos) in killtcellPos.iteritems():
+      #       if bnode in removeBgList:
+      #         continue
+      #       if killer in fullKillers:
+      #         continue
+      #       kx = killpos[0]
+      #       ky = killpos[1]
+      #       dis = (abs(kx - bx)**2 + abs(ky - by)**2)**(0.5)
+      #       if (dis < KILLTCELL_EAT_DIS):
+      #         # I want to remove this particular graph node
+      #         removeBgList += [bnode]
+      #         fullKillers += [killer]
+              
+      #   for remove in removeBgList:
+      #     try:
+      #       bg.remove_node(remove)
+      #       bact_all_coords_map[b].pop(remove, None)
+      #     except nx.exception.NetworkXError:
+      #       continue
+        
 
     elif (step_count % STEP_MULTIPLE in [0, 5]):
       
