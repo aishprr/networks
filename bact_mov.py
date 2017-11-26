@@ -33,7 +33,7 @@ AIC_HCOUNT = 4
 AIC_WCOUNT = 4
 MACRO_INIT_COUNT = 10
 HELPTCELL_INIT_COUNT = 20
-KILLTCELL_INIT_COUNT = 2
+KILLTCELL_INIT_COUNT = 0
 
 STEP_MULTIPLE = 10
 
@@ -44,7 +44,7 @@ KILL_SPEED = 0.3
 BACT_DEG_THRESH = 3
 BACT_CHILD_DIS = 0.05
 MACRO_EAT_DIS = 0.1
-KILLTCELL_EAT_DIS = 0.1
+KILLTCELL_EAT_DIS = 0.05
 HELPER_MACRO_DIS = 0.15
 MACRO_MAX_BACT_EAT = 2
 
@@ -69,7 +69,7 @@ MACRO_BACT_WITHIN_RAD = 0.02
 
 KILLTCELL_NEW_HELP = 0.02
 KILL_PER_MAC = 4
-KILL_DISPR_BAC_THRESH = sum(BACT_INIT_COUNT) / (AIC_HCOUNT * AIC_WCOUNT)
+KILL_DISPR_BAC_THRESH = sum(BACT_INIT_COUNT)
 
 # must add to 1
 BACT_STRENGTH =  [0.1, 0.2, 0.7]
@@ -530,7 +530,38 @@ def main():
 
     #END OF STEP COUNT % 2 == 0
     elif (step_count % STEP_MULTIPLE in [4, 9]):
-      
+      for (m, mpos) in macroPos.iteritems():
+        if m in deadMacros:
+          continue
+        addBgDict = dict()
+        for b2 in xrange(BACT_TYPE_COUNT):
+          addBgDict[b2] = []
+        macroNodeCount = macroInfo[m][GRAPH].number_of_nodes()
+        if (macroNodeCount >= MACRO_BACT_TO_DIE):
+          print "KILLING MACRO!!!!!!!!!!!!!!!!!!!!!!!!!!!!"
+          # a lot of people inside, so kill this macro
+          deadMacros += [m]
+          macroGraph.remove_node(m)
+          for bactType in macroInfo[m][BACTTYPELIST].keys():
+            thisBactTypeNodes = macroInfo[m][BACTTYPELIST][bactType]
+            for thisBactTypeNode in thisBactTypeNodes:
+              addBgDict[bactType] += [macroInfo[m][GRAPHPOS][thisBactTypeNode]]
+            print "ADDING SO MANY NODES HERE of type " + str(bactType) + "!!!! " + str(len(thisBactTypeNodes))
+        for bactType in addBgDict.keys():
+          addBgList = addBgDict[bactType]
+          for add in addBgList:
+            print "adding something here"
+            newbg = bactGraphs[bactType]
+            if len(newbg.nodes()) == 0:
+              newNodeID = 0
+            else:
+              newNodeID = max(newbg.nodes()) + 1
+            newbg.add_node(newNodeID)
+            bact_all_coords_map[bactType][newNodeID] = add
+            print str(bactType) + " adding new node " + str(newNodeID)
+            print str(bactType) + " new number of nodes = " + str(newbg.number_of_nodes())
+            print str(bactType) + " should match with " + str(len(bact_all_coords_map[bactType].keys()))
+
       #print "orig " + str(bactPosInfoOrig)
       #print "bactPosInfo copy orig " + str(bactPosInfo)
       for b in xrange(BACT_TYPE_COUNT):
@@ -538,14 +569,11 @@ def main():
         bg = bactGraphs[b]
         bgList = bg.nodes()
         removeBgList = []
-        addBgDict = dict()
-        for b2 in xrange(BACT_TYPE_COUNT):
-          addBgDict[b2] = []
+        
         for bnode in bgList:
           posArray = bact_all_coords_map[b][bnode]
           bx = posArray[0]
           by = posArray[1]
-
           # check if there's a macrophage close by an kill the bacteria
           for (m, mpos) in macroPos.iteritems():
             if m in deadMacros:
@@ -553,17 +581,6 @@ def main():
             if bnode in removeBgList:
               continue
             macroNodeCount = macroInfo[m][GRAPH].number_of_nodes()
-            if (macroNodeCount >= MACRO_BACT_TO_DIE):
-              print "KILLING MACRO!!!!!!!!!!!!!!!!!!!!!!!!!!!!"
-              # a lot of people inside, so kill this macro
-              deadMacros += [m]
-              macroGraph.remove_node(m)
-              for bactType in macroInfo[m][BACTTYPELIST].keys():
-                thisBactTypeNodes = macroInfo[m][BACTTYPELIST][bactType]
-                for thisBactTypeNode in thisBactTypeNodes:
-                  addBgDict[bactType] += [macroInfo[m][GRAPHPOS][thisBactTypeNode]]
-                print "ADDING SO MANY NODES HERE of type " + str(bactType) + "!!!! " + str(len(thisBactTypeNodes))
-              continue
             if (macroNodeCount >= MACRO_MAX_BACT_EAT):
               continue
             if (macroNodeCount == 0):
@@ -618,21 +635,7 @@ def main():
             bact_all_coords_map[b].pop(remove, None)
           except nx.exception.NetworkXError:
             continue
-        for bactType in addBgDict.keys():
-          addBgList = addBgDict[bactType]
-          for add in addBgList:
-            print "adding something here"
-            newbg = bactGraphs[bactType]
-            if len(newbg.nodes()) == 0:
-              newNodeID = 0
-            else:
-              newNodeID = max(newbg.nodes()) + 1
-            newbg.add_node(newNodeID)
-            bact_all_coords_map[bactType][newNodeID] = add
-            print str(bactType) + " adding new node " + str(newNodeID)
-            print str(bactType) + " new number of nodes = " + str(newbg.number_of_nodes())
-            print str(bactType) + " should match with " + str(len(bact_all_coords_map[bactType].keys()))
-
+        
 
     elif (step_count % STEP_MULTIPLE in [0, 5]):
       
