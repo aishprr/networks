@@ -26,11 +26,11 @@ def merge(*dicts):
     return 
     { k: reduce(lambda d, x: x.get(k, d), dicts, None) for k in reduce(or_, map(lambda x: x.keys(), dicts), set()) }
 
-BACT_INIT_COUNT = [200, 150, 100]
-BACT_COUNT_LIMIT = [500, 500, 500]
+BACT_INIT_COUNT = [25, 10, 5]
+BACT_COUNT_LIMIT = [20, 20, 20]
 AI_INIT_COUNT = [5, 5, 5]
-AIC_HCOUNT = 2
-AIC_WCOUNT = 2
+AIC_HCOUNT = 4
+AIC_WCOUNT = 4
 MACRO_INIT_COUNT = 10
 HELPTCELL_INIT_COUNT = 20
 KILLTCELL_INIT_COUNT = 2
@@ -39,7 +39,7 @@ STEP_MULTIPLE = 10
 
 MACRO_SPEED = 0.1
 HELP_SPEED = 0.2
-KILL_SPEED = 0.1
+KILL_SPEED = 0.3
 
 BACT_DEG_THRESH = 3
 BACT_CHILD_DIS = 0.05
@@ -52,7 +52,7 @@ HELPTCELL_DEG_THRESH = 2
 HELPTCELL_EDGE_DIS = 0.08
 
 BACT_IN_MACRO_REPR = [1, 1, 3]
-BACT_IN_MACRO_REPRO_AGE = 0
+BACT_IN_MACRO_REPRO_AGE = 5
 
 BACT_DRAW_SIZE = 50
 AI_DRAW_SIZE = 10
@@ -66,7 +66,7 @@ MACRO_DRAW_SIZE = 600
 MACRO_BACT_WITHIN_RAD = 0.02
 
 KILLTCELL_NEW_HELP = 0.02
-KILL_PER_MAC = 1
+KILL_PER_MAC = 4
 
 # must add to 1
 BACT_STRENGTH =  [0.1, 0.2, 0.7]
@@ -78,7 +78,7 @@ AIC_CFRAC = 1.0 / AIC_WCOUNT
 
 MACRO_MOVE_IN_GRID = AIC_CFRAC * 1.5
 HELP_MOVE_IN_GRID = AIC_CFRAC * 1.5
-KILL_MOVE_IN_GRID = AIC_CFRAC * 1.5
+KILL_MOVE_IN_GRID = AIC_CFRAC * 0.6
 
 BACT_RAND_LIMITS = [[[0, 0.5], [0, 0.5]], [[0, 0.5], [0.5, 1]], [[0.5, 1], [0, 0.5]]] 
 
@@ -156,6 +156,7 @@ def main():
     totalInverseStrength += 1.0 / elem
   for elem in BACT_STRENGTH:
     inverseStrength += [(1.0 / elem) / totalInverseStrength]
+  print inverseStrength
 
   # initial data structures
   bactGraphs = []
@@ -292,8 +293,8 @@ def main():
           all_coords.update(posDicts[r][c])
       ai_all_coords_map[i] = all_coords
       
-      nx.draw(aiGraphs[i], all_coords, 
-        node_color=color_map, with_labels=False, node_size=AI_DRAW_SIZE)
+      #nx.draw(aiGraphs[i], all_coords, 
+      #  node_color=color_map, with_labels=False, node_size=AI_DRAW_SIZE)
 
     macroCount = macroGraph.number_of_nodes()
     nx.draw(macroGraph, macroPos, alpha=0.5,
@@ -342,7 +343,7 @@ def main():
       maxBactQuadrants += [(maxR,maxC)]
 
     # START OF STEP COUNT % 2 == 0
-    if (step_count % STEP_MULTIPLE in [1,2,3,6, 7, 8]):
+    if (step_count % STEP_MULTIPLE in [1,2,3,6,7,8]):
       # we have information about the previous positions.
       # so, now go through each and find the quadrant with max number
       # of ais of each type
@@ -355,6 +356,9 @@ def main():
                   (maxAr + 0.5) * AIC_RFRAC)
         (bx, by) = ((maxBc + 0.5) * AIC_CFRAC,
                   (maxBr + 0.5) * AIC_RFRAC)
+        # there are 0 of this bacteria, so it shouldn't do anything for us
+        if (maxBc == -1 or maxBr == -1 or bact_count[b] == 0):
+          continue
         for (m, mCoord) in macroPos.iteritems(): 
           macroR = int(mCoord[0] / AIC_RFRAC)
           macroC = int(mCoord[1] / AIC_CFRAC)
@@ -400,6 +404,7 @@ def main():
         for (killt, killCoord) in killtcellPos.iteritems():  
           killR = int(killCoord[0] / AIC_RFRAC)
           killC = int(killCoord[1] / AIC_CFRAC)
+          #print (maxBr, maxBc)
           if ((killR == maxBr) and (killC == maxBc)):
             # move by a small random amount only, once you get to the place
             deltaX = KILL_MOVE_IN_GRID * np.random.random_sample()
