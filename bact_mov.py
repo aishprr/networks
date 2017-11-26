@@ -67,6 +67,7 @@ MACRO_BACT_WITHIN_RAD = 0.02
 
 KILLTCELL_NEW_HELP = 0.02
 KILL_PER_MAC = 4
+KILL_DISPR_BAC_THRESH = sum(BACT_INIT_COUNT) / (AIC_HCOUNT * AIC_WCOUNT)
 
 # must add to 1
 BACT_STRENGTH =  [0.1, 0.2, 0.7]
@@ -589,6 +590,23 @@ def main():
     elif (step_count % STEP_MULTIPLE in [0, 5]):
       
       usedMacros = []
+      newKillTCellPos = dict()
+      for (killt, killCoord) in killtcellPos.iteritems():  
+        killR = int(killCoord[0] / AIC_RFRAC)
+        killC = int(killCoord[1] / AIC_CFRAC)
+        #print (maxBr, maxBc)
+        totalBactCountInGridCell = 0
+        for b in xrange(BACT_TYPE_COUNT):
+          totalBactCountInGridCell += bact_count[b]
+          #totalBactCountInGridCell += len(bactPosInfo[b][killR][killC].keys())
+        if (totalBactCountInGridCell < KILL_DISPR_BAC_THRESH):
+          killtcellGraph.remove_node(killt)
+          #killtcellPos.pop(killt, None)
+          print "killing the kill tcell = " + str(killt)
+        else: 
+          newKillTCellPos[killt] = killCoord
+      killtcellPos = newKillTCellPos
+
       if (killtcellGraph.number_of_nodes() == 0):
         maxKillTcellNode = -1
       else:
@@ -642,7 +660,7 @@ def main():
           else:
             newNodeStartID = max(macroInfo[m][GRAPH].nodes()) + 1
           for oldNode in macroInfo[m][BACTTYPELIST][macroBactType]:
-            # only then can you reproduce
+            # only then can you reproducen
             # print oldNode
             # print macroInfo[m][BACTEATAGE]
 
