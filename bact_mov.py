@@ -31,7 +31,7 @@ BACT_COUNT_LIMIT = [200, 200, 200]
 AI_INIT_COUNT = [5, 5, 5]
 AIC_HCOUNT = 5
 AIC_WCOUNT = 5
-MACRO_INIT_COUNT = 10
+MACRO_INIT_COUNT = 5
 HELPTCELL_INIT_COUNT = 20
 KILLTCELL_INIT_COUNT = 0
 
@@ -64,12 +64,12 @@ KILLTCELL_DRAW_SIZE = 50
 KILLTCELL_DRAW_SHAPE = "s"
 
 # SIZE and BACT_WITHIN_RAD are related
-MACRO_DRAW_SIZE = 600
-MACRO_BACT_WITHIN_RAD = 0.02
+MACRO_DRAW_SIZE = 1200
+MACRO_BACT_WITHIN_RAD = 0.01
 
 KILLTCELL_NEW_HELP = 0.02
 KILL_PER_MAC = 6
-KILL_DISPR_BAC_THRESH = 10
+KILL_DISPR_BAC_THRESH = 0
 
 # must add to 1
 BACT_STRENGTH =  [0.1, 0.2, 0.7]
@@ -240,6 +240,12 @@ def main():
 
   step_count = 0
   while(1):
+
+    for (m, mpos) in macroPos.iteritems():
+      if m in deadMacros:
+        continue
+      macroNodeCount = macroInfo[m][GRAPH].number_of_nodes()
+      print "macronodecount = " + str(macroNodeCount)
 
     #print bact_all_coords_map[BactType.BACT_1]
 
@@ -552,7 +558,8 @@ def main():
             if bnode in removeBgList:
               continue
             macroNodeCount = macroInfo[m][GRAPH].number_of_nodes()
-            if (macroNodeCount >= min(MACRO_MAX_BACT_EAT, MACRO_BACT_TO_DIE)):
+            #print "macronodecount = " + str(macroNodeCount)
+            if (macroNodeCount >= MACRO_MAX_BACT_EAT):
               continue
             if (macroNodeCount == 0):
               macroNewNode = 0
@@ -571,7 +578,7 @@ def main():
               macroInfo[m][GRAPH].add_node(newMacBactNode)
               macroInfo[m][BACTEATAGE][newMacBactNode] = step_count
               randTheta = 2 * np.pi * np.random.random_sample()
-              randRadius = MACRO_BACT_WITHIN_RAD# * np.random.random_sample()
+              randRadius = MACRO_BACT_WITHIN_RAD * np.random.random_sample()
               randX = mx + randRadius * np.cos(randTheta)
               randY = my + randRadius * np.sin(randTheta)
               # now clip this between 0 and 0.9999
@@ -619,7 +626,7 @@ def main():
         macroNodeCount = macroInfo[m][GRAPH].number_of_nodes()
         #if (macroNodeCount >= MACRO_BACT_TO_DIE):
         if (macroNodeCount >= MACRO_BACT_TO_DIE and killtcellGraph.number_of_nodes() == 0):
-          print "KILLING MACRO!!!!!!!!!!!!!!!!!!!!!!!!!!!!"
+          # print "KILLING MACRO!!!!!!!!!!!!!!!!!!!!!!!!!!!!"
           # a lot of people inside, so kill this macro
           deadMacros += [m]
           macroGraph.remove_node(m)
@@ -627,11 +634,11 @@ def main():
             thisBactTypeNodes = macroInfo[m][BACTTYPELIST][bactType]
             for thisBactTypeNode in thisBactTypeNodes:
               addBgDict[bactType] += [macroInfo[m][GRAPHPOS][thisBactTypeNode]]
-            print "ADDING SO MANY NODES HERE of type " + str(bactType) + "!!!! " + str(len(thisBactTypeNodes))
+            # print "ADDING SO MANY NODES HERE of type " + str(bactType) + "!!!! " + str(len(thisBactTypeNodes))
         for bactType in addBgDict.keys():
           addBgList = addBgDict[bactType]
           for add in addBgList:
-            print "adding something here"
+            #print "adding something here"
             newbg = bactGraphs[bactType]
             if len(newbg.nodes()) == 0:
               newNodeID = 0
@@ -639,9 +646,9 @@ def main():
               newNodeID = max(newbg.nodes()) + 1
             newbg.add_node(newNodeID)
             bact_all_coords_map[bactType][newNodeID] = add
-            print str(bactType) + " adding new node " + str(newNodeID)
-            print str(bactType) + " new number of nodes = " + str(newbg.number_of_nodes())
-            print str(bactType) + " should match with " + str(len(bact_all_coords_map[bactType].keys()))
+            # print str(bactType) + " adding new node " + str(newNodeID)
+            # print str(bactType) + " new number of nodes = " + str(newbg.number_of_nodes())
+            # print str(bactType) + " should match with " + str(len(bact_all_coords_map[bactType].keys()))
 
       # #print "orig " + str(bactPosInfoOrig)
       # #print "bactPosInfo copy orig " + str(bactPosInfo)
@@ -770,7 +777,7 @@ def main():
               newKillTCellNode = maxKillTcellNode + 1
               maxKillTcellNode += 1
               # means we want to make a few killer t cells close to here
-              print "adding new killer tcells!!!!"
+              # print "adding new killer tcells!!!!"
               killtcellGraph.add_node(newKillTCellNode)
               killtcellx = hx + KILLTCELL_NEW_HELP * np.random.random_sample()
               killtcelly = hy + KILLTCELL_NEW_HELP * np.random.random_sample()
@@ -797,6 +804,8 @@ def main():
         for macroBactType in macroInfo[m][BACTTYPELIST].keys():
           # for each type of bacteria
           if (BACT_STRENGTH[macroBactType] < BACT_IN_MACRO_REPRO_THRESH):
+            continue
+          if (macroInfo[m][GRAPH].number_of_nodes() >= MACRO_BACT_TO_DIE):
             continue
           # else we want to actually reproduce for everything
           if (macroInfo[m][GRAPH].number_of_nodes() == 0):
