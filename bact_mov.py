@@ -48,6 +48,8 @@ KILLTCELL_EAT_DIS = 0.1
 HELPER_MACRO_DIS = 0.15
 MACRO_MAX_BACT_EAT = 2
 
+MACRO_BACT_TO_DIE = 10
+
 HELPTCELL_DEG_THRESH = 2
 HELPTCELL_EDGE_DIS = 0.08
 
@@ -159,8 +161,10 @@ def main():
     inverseStrength += [(1.0 / elem) / totalInverseStrength]
   print inverseStrength
 
+
   # initial data structures
   bactGraphs = []
+  deadMacros = []
   aiGraphs = []
   bactPosInfoOrig = []
   bactPosInfo = []
@@ -195,6 +199,7 @@ def main():
     bact_all_coords_map[b] = newBgPos
     #print newBgPos
     #print initialBgPos
+
 
   for a in xrange(AI_TYPE_COUNT):
     ai = nx.empty_graph(AI_INIT_COUNT[a])
@@ -235,6 +240,9 @@ def main():
 
   step_count = 0
   while(1):
+
+    #print bact_all_coords_map[BactType.BACT_1]
+
     step_count += 1
     time.sleep(0.5)
     
@@ -311,7 +319,10 @@ def main():
       node_color=KILLTCELL_COLOR, node_shape=KILLTCELL_DRAW_SHAPE, 
       node_size=KILLTCELL_DRAW_SIZE)
 
+    print deadMacros
     for m in macroInfo:
+      if m in deadMacros:
+        continue
       #print "macro " + str(m) + " color map " + str(macroInfo[m][GRAPHCOLORMAP])
       nx.draw(macroInfo[m][GRAPH], macroInfo[m][GRAPHPOS],
         node_color=macroInfo[m][GRAPHCOLORMAP], 
@@ -342,6 +353,7 @@ def main():
             maxR = r
             maxC = c
       maxBactQuadrants += [(maxR,maxC)]
+    #print "MAX BAXT QUADRANTS: " + str(maxBactQuadrants)
 
     # START OF STEP COUNT % 2 == 0
     if (step_count % STEP_MULTIPLE in [1,2,3,6,7,8]):
@@ -361,6 +373,8 @@ def main():
         if (maxBc == -1 or maxBr == -1 or bact_count[b] == 0):
           continue
         for (m, mCoord) in macroPos.iteritems(): 
+          if m in deadMacros:
+            continue
           macroR = int(mCoord[0] / AIC_RFRAC)
           macroC = int(mCoord[1] / AIC_CFRAC)
           # macro move towards bacteria
@@ -405,15 +419,17 @@ def main():
         for (killt, killCoord) in killtcellPos.iteritems():  
           killR = int(killCoord[0] / AIC_RFRAC)
           killC = int(killCoord[1] / AIC_CFRAC)
-          #print (maxBr, maxBc)
+          #print str((maxBr, maxBc)) +  str((killR, killC))
           if ((killR == maxBr) and (killC == maxBc)):
             # move by a small random amount only, once you get to the place
             deltaX = KILL_MOVE_IN_GRID * np.random.random_sample()
             deltaY = KILL_MOVE_IN_GRID * np.random.random_sample()
+            #print "INSIDE CORRECT ONE"
           else:
             (dx, dy) = (bx - killCoord[0], by - killCoord[1])
-            deltaX = dx * inverseStrength[b] * KILL_SPEED
-            deltaY = dy * inverseStrength[b] * KILL_SPEED
+            deltaX = dx * (1.0/len(bact_speed)) * KILL_SPEED
+            deltaY = dy * (1.0/len(bact_speed)) * KILL_SPEED
+          #print deltaX, deltaY
           newx = killCoord[0] + deltaX
           newy = killCoord[1] + deltaY
           killtcellPos[killt][0] = newx
@@ -522,6 +538,9 @@ def main():
         bg = bactGraphs[b]
         bgList = bg.nodes()
         removeBgList = []
+        addBgDict = dict()
+        for b2 in xrange(BACT_TYPE_COUNT):
+          addBgDict[b2] = []
         for bnode in bgList:
           posArray = bact_all_coords_map[b][bnode]
           bx = posArray[0]
@@ -529,9 +548,22 @@ def main():
 
           # check if there's a macrophage close by an kill the bacteria
           for (m, mpos) in macroPos.iteritems():
+            if m in deadMacros:
+              continue
             if bnode in removeBgList:
               continue
             macroNodeCount = macroInfo[m][GRAPH].number_of_nodes()
+            if (macroNodeCount >= MACRO_BACT_TO_DIE):
+              print "KILLING MACRO!!!!!!!!!!!!!!!!!!!!!!!!!!!!"
+              # a lot of people inside, so kill this macro
+              deadMacros += [m]
+              macroGraph.remove_node(m)
+              for bactType in macroInfo[m][BACTTYPELIST].keys():
+                thisBactTypeNodes = macroInfo[m][BACTTYPELIST][bactType]
+                for thisBactTypeNode in thisBactTypeNodes:
+                  addBgDict[bactType] += [macroInfo[m][GRAPHPOS][thisBactTypeNode]]
+                print "ADDING SO MANY NODES HERE of type " + str(bactType) + "!!!! " + str(len(thisBactTypeNodes))
+              continue
             if (macroNodeCount >= MACRO_MAX_BACT_EAT):
               continue
             if (macroNodeCount == 0):
@@ -586,6 +618,21 @@ def main():
             bact_all_coords_map[b].pop(remove, None)
           except nx.exception.NetworkXError:
             continue
+        for bactType in addBgDict.keys():
+          addBgList = addBgDict[bactType]
+          for add in addBgList:
+            print "adding something here"
+            newbg = bactGraphs[bactType]
+            if len(newbg.nodes()) == 0:
+              newNodeID = 0
+            else:
+              newNodeID = max(newbg.nodes()) + 1
+            newbg.add_node(newNodeID)
+            bact_all_coords_map[bactType][newNodeID] = add
+            print str(bactType) + " adding new node " + str(newNodeID)
+            print str(bactType) + " new number of nodes = " + str(newbg.number_of_nodes())
+            print str(bactType) + " should match with " + str(len(bact_all_coords_map[bactType].keys()))
+
 
     elif (step_count % STEP_MULTIPLE in [0, 5]):
       
@@ -618,6 +665,8 @@ def main():
         # the weak ones from that macrophage
         (hx, hy) = (helptnodeCoords[0], helptnodeCoords[1])
         for (m, mCoord) in macroPos.iteritems():
+          if m in deadMacros:
+            continue
           if (m in usedMacros):
             # only use 1 macro once for 1 helper T cell
             continue
@@ -648,6 +697,8 @@ def main():
                 macroInfo[m][BACTTYPELIST][macroBactType] = []
 
       for (m, mCoord) in macroPos.iteritems():
+        if m in deadMacros:
+          continue
         mx = mCoord[0]
         my = mCoord[1]
         for macroBactType in macroInfo[m][BACTTYPELIST].keys():
