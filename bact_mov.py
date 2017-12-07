@@ -23,15 +23,15 @@ from functools import reduce
 from operator import or_
 
 def merge(*dicts):
-    return 
     { k: reduce(lambda d, x: x.get(k, d), dicts, None) for k in reduce(or_, map(lambda x: x.keys(), dicts), set()) }
+
+AIC_HCOUNT = 5
+AIC_WCOUNT = 5
 
 BACT_INIT_COUNT = [50, 30, 10]
 BACT_COUNT_LIMIT = [200, 200, 200]
 AI_INIT_COUNT = [5, 5, 5]
-AIC_HCOUNT = 5
-AIC_WCOUNT = 5
-MACRO_INIT_COUNT = 5
+MACRO_INIT_COUNT = 10
 HELPTCELL_INIT_COUNT = 20
 KILLTCELL_INIT_COUNT = 0
 
@@ -42,6 +42,8 @@ HELP_SPEED = 0.2
 KILL_SPEED = 0.5
 
 BACT_DEG_THRESH = 3
+BACT_DIS_THRESH = [0.05, 0.05, 0.05]
+
 BACT_CHILD_DIS = 0.05
 MACRO_EAT_DIS = 0.1
 KILLTCELL_EAT_DIS = 0.05
@@ -90,6 +92,7 @@ TOT_AI_TYPE_COUNT = 3
 
 AI_TYPE_COUNT = 3
 BACT_TYPE_COUNT = 3
+
 class AIType:
   BACT_1, BACT_2, BACT_3 = range(TOT_AI_TYPE_COUNT)
 
@@ -115,7 +118,6 @@ def main():
   global BACT_STRENGTH
   bact_count = BACT_INIT_COUNT
   bact_colors = ['gold', 'orange', 'red']
-  bact_dis_thresh = [0.05, 0.05, 0.05]
   ai_conv_dis_thresh = [0.05, 0.05, 0.05]
   ai_colors = ['limegreen', 'yellowgreen', 'green']
   bact_speed = [0.2, 0.15, 0.2]
@@ -129,19 +131,13 @@ def main():
   macroPos = nx.random_layout(macroGraph)
   macroCount = MACRO_INIT_COUNT
 
-  helptcellImg = mpimg.imread('tcell.png')
   helptcellGraph = nx.empty_graph(HELPTCELL_INIT_COUNT)
   helptcellPos = nx.random_layout(helptcellGraph)
   helptcellCount = HELPTCELL_INIT_COUNT
 
-  killtcellImg = mpimg.imread('tcell.png')
   killtcellGraph = nx.empty_graph(KILLTCELL_INIT_COUNT)
   killtcellPos = nx.random_layout(killtcellGraph)
   killtcellCount = KILLTCELL_INIT_COUNT
-
-  for t in xrange(helptcellCount): 
-    helptcellGraph.node[t][IMAGE] = helptcellImg
-
 
   macroInfo = dict()
   for node in macroGraph.nodes():
@@ -161,7 +157,7 @@ def main():
     totalInverseStrength += 1.0 / elem
   for elem in BACT_STRENGTH:
     inverseStrength += [(1.0 / elem) / totalInverseStrength]
-  print inverseStrength
+  #print inverseStrength
 
 
   # initial data structures
@@ -229,9 +225,9 @@ def main():
         from networkx.drawing.nx_pydot import graphviz_layout
         layout = graphviz_layout
     except ImportError:
-        print("PyGraphviz and pydot not found;\n"
-              "drawing with spring layout;\n"
-              "will be slow.")
+        #print("PyGraphviz and pydot not found;\n"
+        #      "drawing with spring layout;\n"
+        #      "will be slow.")
         layout = nx.spring_layout
 
   
@@ -243,17 +239,18 @@ def main():
   step_count = 0
   bactCountList = BACT_INIT_COUNT
   while(1):
+    print "Time step " + str(step_count)
 
     for (m, mpos) in macroPos.iteritems():
       if m in deadMacros:
         continue
       macroNodeCount = macroInfo[m][GRAPH].number_of_nodes()
-      print "macronodecount = " + str(macroNodeCount)
+      #print "macronodecount = " + str(macroNodeCount)
 
     #print bact_all_coords_map[BactType.BACT_1]
 
     step_count += 1
-    time.sleep(0.5)
+    time.sleep(1)
     
     plt.cla()
 
@@ -301,17 +298,17 @@ def main():
         nx.draw(bactGraphs[i], all_coords, edge_color=bact_colors[i], alpha=1,
           node_color=bact_colors[i], with_labels=False, 
           node_size=BACT_DRAW_SIZE)
-        print nx.number_connected_components(bactGraphs[i])
+        #print i, step_count, nx.number_connected_components(bactGraphs[i])
         connected_comp = 0
         if (BACT_STRENGTH[i] > BACT_IN_MACRO_KILL_THRESH):
           continue
-        print prevBacCountList, bactCountList
+        #print prevBacCountList, bactCountList
         #if (i-1 >= 0 and ((prevBacCountList[i-1] - bactCountList[i-1]) > 10)):
         #  BACT_STRENGTH[i] += 0.03
         if (i-1 >= 0 and (nx.number_connected_components(bactGraphs[i-1]) < bact_count[i-1] / 3)):
           BACT_STRENGTH[i] += 0.03
 
-    print step_count, bactCountList, BACT_STRENGTH
+    #print step_count, bactCountList, BACT_STRENGTH
 
     for i in xrange(AI_TYPE_COUNT):
       # print ai_colors[i], aiGraphs[i].number_of_nodes()
@@ -340,7 +337,7 @@ def main():
       node_color=KILLTCELL_COLOR, node_shape=KILLTCELL_DRAW_SHAPE, 
       node_size=KILLTCELL_DRAW_SIZE)
 
-    print deadMacros
+    #print deadMacros
     for m in macroInfo:
       if m in deadMacros:
         continue
@@ -511,7 +508,7 @@ def main():
               #print "node1 = " + str(node1)
               #print "node2 = " + str(node2)
               
-              if (dis < bact_dis_thresh[b] 
+              if (dis < BACT_DIS_THRESH[b] 
                 and bactGraphs[b].degree(node1) < BACT_DEG_THRESH
                 and bactGraphs[b].degree(node2) < BACT_DEG_THRESH):
                 if (not bactGraphs[b].has_edge(node1, node2)):
@@ -680,14 +677,14 @@ def main():
         if (totalBactCountInGridCell <= KILL_DISPR_BAC_THRESH):
           killtcellGraph.remove_node(killt)
           #killtcellPos.pop(killt, None)
-          print "killing the kill tcell = " + str(killt)
+          #print "killing the kill tcell = " + str(killt)
         else: 
           newKillTCellPos[killt] = killCoord
       killtcellPos = dict()
       killtcellPos = newKillTCellPos
 
       if (killtcellGraph.number_of_nodes() == 0):
-        print "ZERO NODES LEFT FOR KILLER TCELLS!!!!!"
+        #print "ZERO NODES LEFT FOR KILLER TCELLS!!!!!"
         maxKillTcellNode = -1
       else:
         maxKillTcellNode = max(killtcellGraph.nodes())
@@ -858,6 +855,9 @@ def main():
             all_coords.update(posDicts[r][c])
         ai_all_coords_map[ai] = posDicts
     
+    
+    mng = plt.get_current_fig_manager()
+    mng.full_screen_toggle()
     plt.draw()
     plt.pause(1e-17)
     

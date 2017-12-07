@@ -1,0 +1,68 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<gexf xmlns:viz="http:///www.gexf.net/1.1draft/viz" version="1.1" xmlns="http://www.gexf.net/1.1draft">
+<meta lastmodifieddate="2010-03-03+23:44">
+<creator>Gephi 0.7</creator>
+</meta>
+<graph defaultedgetype="directed" idtype="string" type="static">
+<nodes count="16">
+<node id="0.0" label="ACCIAIUOL"/>
+<node id="1.0" label="ALBIZZI"/>
+<node id="2.0" label="BARBADORI"/>
+<node id="3.0" label="BISCHERI"/>
+<node id="4.0" label="CASTELLAN"/>
+<node id="5.0" label="GINORI"/>
+<node id="6.0" label="GUADAGNI"/>
+<node id="7.0" label="LAMBERTES"/>
+<node id="8.0" label="MEDICI"/>
+<node id="9.0" label="PAZZI"/>
+<node id="10.0" label="PERUZZI"/>
+<node id="11.0" label="PUCCI"/>
+<node id="12.0" label="RIDOLFI"/>
+<node id="13.0" label="SALVIATI"/>
+<node id="14.0" label="STROZZI"/>
+<node id="15.0" label="TORNABUON"/>
+</nodes>
+<edges count="40">
+<edge id="0" source="0.0" target="8.0"/>
+<edge id="1" source="1.0" target="5.0"/>
+<edge id="2" source="1.0" target="6.0"/>
+<edge id="3" source="1.0" target="8.0"/>
+<edge id="4" source="2.0" target="4.0"/>
+<edge id="5" source="2.0" target="8.0"/>
+<edge id="6" source="3.0" target="6.0"/>
+<edge id="7" source="3.0" target="10.0"/>
+<edge id="8" source="3.0" target="14.0"/>
+<edge id="9" source="4.0" target="2.0"/>
+<edge id="10" source="4.0" target="10.0"/>
+<edge id="11" source="4.0" target="14.0"/>
+<edge id="12" source="5.0" target="1.0"/>
+<edge id="13" source="6.0" target="1.0"/>
+<edge id="14" source="6.0" target="3.0"/>
+<edge id="15" source="6.0" target="7.0"/>
+<edge id="16" source="6.0" target="15.0"/>
+<edge id="17" source="7.0" target="6.0"/>
+<edge id="18" source="8.0" target="0.0"/>
+<edge id="19" source="8.0" target="1.0"/>
+<edge id="20" source="8.0" target="2.0"/>
+<edge id="21" source="8.0" target="12.0"/>
+<edge id="22" source="8.0" target="13.0"/>
+<edge id="23" source="8.0" target="15.0"/>
+<edge id="24" source="9.0" target="13.0"/>
+<edge id="25" source="10.0" target="3.0"/>
+<edge id="26" source="10.0" target="4.0"/>
+<edge id="27" source="10.0" target="14.0"/>
+<edge id="28" source="12.0" target="8.0"/>
+<edge id="29" source="12.0" target="14.0"/>
+<edge id="30" source="12.0" target="15.0"/>
+<edge id="31" source="13.0" target="8.0"/>
+<edge id="32" source="13.0" target="9.0"/>
+<edge id="33" source="14.0" target="3.0"/>
+<edge id="34" source="14.0" target="4.0"/>
+<edge id="35" source="14.0" target="10.0"/>
+<edge id="36" source="14.0" target="12.0"/>
+<edge id="37" source="15.0" target="6.0"/>
+<edge id="38" source="15.0" target="8.0"/>
+<edge id="39" source="15.0" target="12.0"/>
+</edges>
+</graph>
+</gexf>
