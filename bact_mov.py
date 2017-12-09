@@ -28,9 +28,9 @@ def merge(*dicts):
 AIC_HCOUNT = 5
 AIC_WCOUNT = 5
 
-BACT_INIT_COUNT = [50, 30, 10]
-BACT_COUNT_LIMIT = [200, 200, 200]
-AI_INIT_COUNT = [5, 5, 5]
+BACT_INIT_COUNT = [50, 30, 10, 15, 10]
+BACT_COUNT_LIMIT = [200, 200, 200, 120, 120]
+AI_INIT_COUNT = [5, 5, 5, 5, 5]
 MACRO_INIT_COUNT = 10
 HELPTCELL_INIT_COUNT = 20
 KILLTCELL_INIT_COUNT = 0
@@ -42,7 +42,7 @@ HELP_SPEED = 0.2
 KILL_SPEED = 0.5
 
 BACT_DEG_THRESH = 3
-BACT_DIS_THRESH = [0.05, 0.05, 0.05]
+BACT_DIS_THRESH = [0.05] * 5
 
 BACT_CHILD_DIS = 0.05
 MACRO_EAT_DIS = 0.1
@@ -55,7 +55,7 @@ MACRO_BACT_TO_DIE = 50
 HELPTCELL_DEG_THRESH = 2
 HELPTCELL_EDGE_DIS = 0.08
 
-BACT_IN_MACRO_REPR = [1, 1, 3]
+BACT_IN_MACRO_REPR = [1, 1, 3, 3, 3]
 BACT_IN_MACRO_REPRO_AGE = 5
 
 BACT_DRAW_SIZE = 50
@@ -74,7 +74,7 @@ KILL_PER_MAC = 6
 KILL_DISPR_BAC_THRESH = 0
 
 # must add to 1
-BACT_STRENGTH =  [0.33, 0.33, 0.33]
+BACT_STRENGTH =  [0.33, 0.33, 0.33, 0.33, 0.33]
 BACT_IN_MACRO_KILL_THRESH = 0.5
 BACT_IN_MACRO_REPRO_THRESH = 0.5
 
@@ -85,19 +85,19 @@ MACRO_MOVE_IN_GRID = AIC_CFRAC * 1.5
 HELP_MOVE_IN_GRID = AIC_CFRAC * 1.5
 KILL_MOVE_IN_GRID = AIC_CFRAC * 1.5
 
-BACT_RAND_LIMITS = [[[0, 0.5], [0, 0.5]], [[0, 0.5], [0.5, 1]], [[0.5, 1], [0, 0.5]]] 
+BACT_RAND_LIMITS = [[[0, 0.5], [0, 0.5]], [[0, 0.5], [0, 0.5]], [[0, 0.5], [0.5, 1]], [[0.5, 1], [0, 0.5]], [[0.5, 1], [0, 0.5]]] 
 
-TOT_BACT_TYPE_COUNT = 3
-TOT_AI_TYPE_COUNT = 3
+TOT_BACT_TYPE_COUNT = 5
+TOT_AI_TYPE_COUNT = 5
 
 AI_TYPE_COUNT = 3
 BACT_TYPE_COUNT = 3
 
 class AIType:
-  BACT_1, BACT_2, BACT_3 = range(TOT_AI_TYPE_COUNT)
+  BACT_1, BACT_2, BACT_3, BACT_4, BACT_5 = range(TOT_AI_TYPE_COUNT)
 
 class BactType:
-  BACT_1, BACT_2, BACT_3 = range(TOT_BACT_TYPE_COUNT)
+  BACT_1, BACT_2, BACT_3, BACT_4, BACT_5 = range(TOT_BACT_TYPE_COUNT)
 
 AI_PER_BAC = 3
 
@@ -117,13 +117,15 @@ def main():
 
   global BACT_STRENGTH
   bact_count = BACT_INIT_COUNT
-  bact_colors = ['gold', 'orange', 'red']
-  ai_conv_dis_thresh = [0.05, 0.05, 0.05]
-  ai_colors = ['limegreen', 'yellowgreen', 'green']
-  bact_speed = [0.2, 0.15, 0.2]
+  bact_colors = ['gold', 'orange', 'red', 'yellow', 'pink']
+  ai_conv_dis_thresh = [0.05, 0.05, 0.05, 0.05, 0.05]
+  ai_colors = ['limegreen', 'yellowgreen', 'green', 'blue', 'pink']
+  bact_speed = [0.2, 0.15, 0.2, 0.15, 0.2]
   bact_ai_map = {BactType.BACT_1: AIType.BACT_1, 
               BactType.BACT_2: AIType.BACT_2, 
-              BactType.BACT_3: AIType.BACT_3}
+              BactType.BACT_3: AIType.BACT_3,
+              BactType.BACT_4: AIType.BACT_4,
+              BactType.BACT_5: AIType.BACT_5}
   inverseStrength = []            
 
 
@@ -250,7 +252,7 @@ def main():
     #print bact_all_coords_map[BactType.BACT_1]
 
     step_count += 1
-    time.sleep(1)
+    time.sleep(0.5)
     
     plt.cla()
 
